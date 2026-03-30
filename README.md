@@ -12,7 +12,7 @@ Code for Information Retrieval project
 curl -fsSL https://elastic.co/start-local | sh
 ```
 
-After installing the services will be running on the following ports:
+This will create a local Elasticsearch and Kibana setup and a `elastic-start-local` directory with a `.env` file with passwords and the API key. After installing the services will be running on the following ports:
 
 - Elasticsearch: http://localhost:9200
 
