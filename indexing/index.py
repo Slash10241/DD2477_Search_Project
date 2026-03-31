@@ -1,9 +1,10 @@
 import argparse
-from dataclasses import dataclass
 import json
 import os
+from dataclasses import dataclass, field
 from typing import Any, Iterator
 
+import matplotlib.pyplot as plt
 from elasticsearch import Elasticsearch, helpers
 from tqdm import tqdm
 
@@ -18,6 +19,10 @@ BULK_CHUNK_SIZE = 5000
 BULK_MAX_BYTES = 50 * 1024 * 1024
 BULK_THREAD_COUNT = 16
 
+# For stats
+HISTOGRAM_BIN_SIZE_CHARS = 500
+TOP_OUTLIER_FILES = 10
+
 
 @dataclass()
 class Segment:
@@ -31,6 +36,106 @@ class Chunk:
     start_time: float
     end_time: float
     text: str
+
+
+@dataclass()
+class IndexingStats:
+    files_processed: int = 0
+    total_chunks: int = 0
+
+    chunk_text_len_min: int = 0
+    chunk_text_len_max: int = 0
+    chunk_text_len_sum: int = 0
+
+    chunk_duration_min: float = 0.0
+    chunk_duration_max: float = 0.0
+    chunk_duration_sum: float = 0.0
+
+    chunk_words_min: int = 0
+    chunk_words_max: int = 0
+    chunk_words_sum: int = 0
+
+    chunk_text_len_hist_bins: dict[int, int] = field(default_factory=dict)
+
+
+def _update_chunk_stats(stats: IndexingStats, chunk: Chunk):
+    text_len = len(chunk.text)
+    duration = max(0.0, chunk.end_time - chunk.start_time)
+    word_count = len(chunk.text.split())
+
+    if stats.total_chunks == 0:
+        stats.chunk_text_len_min = text_len
+        stats.chunk_text_len_max = text_len
+        stats.chunk_duration_min = duration
+        stats.chunk_duration_max = duration
+        stats.chunk_words_min = word_count
+        stats.chunk_words_max = word_count
+    else:
+        stats.chunk_text_len_min = min(stats.chunk_text_len_min, text_len)
+        stats.chunk_text_len_max = max(stats.chunk_text_len_max, text_len)
+        stats.chunk_duration_min = min(stats.chunk_duration_min, duration)
+        stats.chunk_duration_max = max(stats.chunk_duration_max, duration)
+        stats.chunk_words_min = min(stats.chunk_words_min, word_count)
+        stats.chunk_words_max = max(stats.chunk_words_max, word_count)
+
+    stats.total_chunks += 1
+    stats.chunk_text_len_sum += text_len
+    stats.chunk_duration_sum += duration
+    stats.chunk_words_sum += word_count
+
+    bin_start = (text_len // HISTOGRAM_BIN_SIZE_CHARS) * HISTOGRAM_BIN_SIZE_CHARS
+    stats.chunk_text_len_hist_bins[bin_start] = (
+        stats.chunk_text_len_hist_bins.get(bin_start, 0) + 1
+    )
+
+
+def _save_chunk_length_histogram(stats: IndexingStats, output_path: str):
+    sorted_bins = sorted(stats.chunk_text_len_hist_bins.items())
+    x = [bin_start for bin_start, _ in sorted_bins]
+    y = [count for _, count in sorted_bins]
+
+    plt.figure(figsize=(12, 6))
+    plt.bar(x, y, width=HISTOGRAM_BIN_SIZE_CHARS * 0.9, align="edge")
+    plt.title("Chunk Text Length Histogram")
+    plt.xlabel("Chunk text length (characters)")
+    plt.ylabel("Number of chunks")
+    plt.grid(axis="y", alpha=0.3)
+    plt.tight_layout()
+    plt.savefig(output_path, dpi=150)
+    plt.close()
+    print(f"\nSaved text length histogram: {output_path}")
+
+
+def _print_indexing_stats(stats: IndexingStats):
+    print("\nChunk statistics:")
+    print(f"  files_processed: {stats.files_processed}")
+    if stats.total_chunks == 0:
+        print("  total_chunks: 0")
+        return
+
+    text_len_mean = stats.chunk_text_len_sum / stats.total_chunks
+    duration_mean = stats.chunk_duration_sum / stats.total_chunks
+    words_mean = stats.chunk_words_sum / stats.total_chunks
+
+    print(f"  total_chunks: {stats.total_chunks}")
+    print(
+        "  chunk_text_len_chars: "
+        f"min={stats.chunk_text_len_min}, "
+        f"max={stats.chunk_text_len_max}, "
+        f"mean={text_len_mean:.2f}"
+    )
+    print(
+        "  chunk_duration_seconds: "
+        f"min={stats.chunk_duration_min:.2f}, "
+        f"max={stats.chunk_duration_max:.2f}, "
+        f"mean={duration_mean:.2f}"
+    )
+    print(
+        "  chunk_word_count: "
+        f"min={stats.chunk_words_min}, "
+        f"max={stats.chunk_words_max}, "
+        f"mean={words_mean:.2f}"
+    )
 
 
 def create_index(es: Elasticsearch):
@@ -59,6 +164,7 @@ def parse_transcript(json_data: dict[str, Any]) -> list[Segment]:
     """
     segments: list[Segment] = []
     results = json_data.get("results", [])
+    last_start_time = -1.0
 
     for result in results:
         for alt in result.get("alternatives", []):
@@ -72,7 +178,13 @@ def parse_transcript(json_data: dict[str, Any]) -> list[Segment]:
                 start = float(w["startTime"].replace("s", ""))
                 end = float(w["endTime"].replace("s", ""))
                 text = w["word"]
+
+                # Guard against malformed replay blocks where timings restart at ~0.
+                if start < last_start_time:
+                    continue
+
                 segments.append(Segment(start=start, end=end, text=text))
+                last_start_time = start
     return segments
 
 
@@ -111,7 +223,9 @@ def chunk_transcript(segments: list[Segment]) -> list[Chunk]:
     return chunks
 
 
-def iter_actions(all_files: list[str]) -> Iterator[dict[str, Any]]:
+def iter_actions(
+    all_files: list[str], stats: IndexingStats
+) -> Iterator[dict[str, Any]]:
     for file_path in tqdm(all_files, desc="Indexing transcripts", unit="file"):
         with open(file_path, "r", encoding="utf-8") as f:
             data = json.load(f)
@@ -120,9 +234,13 @@ def iter_actions(all_files: list[str]) -> Iterator[dict[str, Any]]:
         show_filename_prefix = os.path.basename(os.path.dirname(file_path))
 
         segments = parse_transcript(data)
+        stats.files_processed += 1
+
         chunks = chunk_transcript(segments)
 
         for chunk in chunks:
+            _update_chunk_stats(stats, chunk)
+
             yield {
                 "_index": INDEX_NAME,
                 "_source": {
@@ -142,10 +260,12 @@ def index_transcripts(es: Elasticsearch, transcripts_dir: str):
             if file.endswith(".json"):
                 all_files.append(os.path.join(root, file))
 
+    stats = IndexingStats()
+
     indexed_count = 0
     for ok, _ in helpers.parallel_bulk(
         es,
-        iter_actions(all_files),
+        iter_actions(all_files, stats),
         thread_count=BULK_THREAD_COUNT,
         chunk_size=BULK_CHUNK_SIZE,
         max_chunk_bytes=BULK_MAX_BYTES,
@@ -158,6 +278,11 @@ def index_transcripts(es: Elasticsearch, transcripts_dir: str):
 
     print(f"Indexing complete. Total chunks indexed: {indexed_count}")
     print(f"Total files processed: {len(all_files)}")
+    _print_indexing_stats(stats)
+
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    histogram_output_path = os.path.join(base_dir, "chunk_text_length_histogram.png")
+    _save_chunk_length_histogram(stats, histogram_output_path)
 
 
 def parse_args() -> argparse.Namespace:
