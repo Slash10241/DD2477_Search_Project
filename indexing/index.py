@@ -253,12 +253,24 @@ def iter_actions(
             }
 
 
-def index_transcripts(es: Elasticsearch, transcripts_dir: str):
+def index_transcripts(
+    es: Elasticsearch, transcripts_dir: str, max_files: int | None = None
+):
     all_files: list[str] = []
     for root, _dirs, files in os.walk(transcripts_dir):
         for file in files:
             if file.endswith(".json"):
                 all_files.append(os.path.join(root, file))
+
+    total_discovered_files = len(all_files)
+    if max_files is not None:
+        if max_files < 1:
+            raise ValueError("--max-files must be >= 1")
+        all_files = all_files[:max_files]
+        print(
+            "File processing limit enabled: "
+            f"{len(all_files)} of {total_discovered_files} files will be indexed"
+        )
 
     stats = IndexingStats()
 
@@ -278,6 +290,7 @@ def index_transcripts(es: Elasticsearch, transcripts_dir: str):
 
     print(f"Indexing complete. Total chunks indexed: {indexed_count}")
     print(f"Total files processed: {len(all_files)}")
+    print(f"Total files discovered: {total_discovered_files}")
     _print_indexing_stats(stats)
 
     base_dir = os.path.dirname(os.path.abspath(__file__))
@@ -301,6 +314,12 @@ def parse_args() -> argparse.Namespace:
         required=True,
         help="Elasticsearch API key",
     )
+    parser.add_argument(
+        "--max-files",
+        type=int,
+        default=None,
+        help="Optional limit for number of files to process",
+    )
     return parser.parse_args()
 
 
@@ -309,7 +328,11 @@ def main():
 
     es = Elasticsearch(ES_HOST, api_key=args.api_key)
     create_index(es)
-    index_transcripts(es, transcripts_dir=args.transcripts_dir)
+    index_transcripts(
+        es,
+        transcripts_dir=args.transcripts_dir,
+        max_files=args.max_files,
+    )
 
 
 if __name__ == "__main__":

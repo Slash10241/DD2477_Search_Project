@@ -27,7 +27,7 @@ uv run index.py \
 	--api-key ES_LOCAL_API_KEY
 ```
 
-The `ES_LOCAL_API_KEY` can be found in the `.env` file in the `elastic-start-local` directory.
+The `ES_LOCAL_API_KEY` can be found in the `.env` file in the `elastic-start-local` directory. An optional `--max-files` flag can be used to limit the number of files to process (e.g. for testing).
 
 5. Check that the index exists in Kibana -> Data Management:
 
