@@ -17,12 +17,20 @@ MODELS = [
     "BAAI/bge-large-en-v1.5",
     "BAAI/bge-m3",
     "sentence-transformers/all-MiniLM-L6-v2",
+    "sentence-transformers/all-mpnet-base-v2",
+    "nomic-ai/nomic-embed-text-v1.5",
+    "cointegrated/rubert-tiny2",
     "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
     "Qwen/Qwen3-Embedding-0.6B",
+    "intfloat/multilingual-e5-small",
+    "microsoft/harrier-oss-v1-270m",
+    "google/embeddinggemma-300m",  # Requires accepting terms on Hugging Face and authentication
+    "voyageai/voyage-4-nano",
+    "mixedbread-ai/mxbai-embed-large-v1",
 ]
 
-RUNS = 5  # Number of timed encoding runs per model and text
-WARMUP = 1  # Number of warmup runs before timing
+RUNS = 10  # Number of timed encoding runs per model and text
+WARMUP = 3  # Number of warmup runs before timing
 
 
 @dataclass
@@ -32,12 +40,19 @@ class BenchmarkResult:
     min_encode_seconds: float
     max_encode_seconds: float
     embedding_shape: tuple[int, ...]
+    param_count: int = 0
 
 
 def _sync_if_needed(device: str):
     """Synchronize CUDA if using GPU to ensure accurate timing."""
     if device.startswith("cuda") and torch.cuda.is_available():
         torch.cuda.synchronize()
+
+
+def _count_parameters(model) -> int:
+    """Count total parameters in a model."""
+    total_params = sum(p.numel() for p in model.parameters())
+    return total_params
 
 
 def benchmark_model(
@@ -67,6 +82,7 @@ def benchmark_model(
                 embedding_shape = tuple(int(dim) for dim in embedding.shape)
 
     avg_encode = statistics.mean(run_times)
+    param_count = _count_parameters(model)
 
     return BenchmarkResult(
         model_name=model_name,
@@ -74,27 +90,41 @@ def benchmark_model(
         min_encode_seconds=min(run_times),
         max_encode_seconds=max(run_times),
         embedding_shape=embedding_shape,
+        param_count=param_count,
     )
+
+
+def _format_param_count(count: int) -> str:
+    """Format parameter count with M/B suffixes."""
+    if count == 0:
+        return "N/A"
+    if count >= 1e9:
+        return f"{count / 1e9:.2f}B"
+    elif count >= 1e6:
+        return f"{count / 1e6:.2f}M"
+    else:
+        return f"{count / 1e3:.2f}K"
 
 
 def print_summary(results: list[BenchmarkResult]) -> None:
     print("\nEmbedding Benchmark Results")
-    print("=" * 112)
+    print("=" * 135)
     print(
-        f"{'Model':60} {'AvgEncode(ms)':>13} {'Min(ms)':>10} {'Max(ms)':>10} {'Shape':>14}"
+        f"{'Model':60} {'Params':>12} {'AvgEncode(ms)':>13} {'Min(ms)':>10} {'Max(ms)':>10} {'Shape':>14}"
     )
-    print("-" * 112)
+    print("-" * 135)
 
     for result in sorted(results, key=lambda r: r.avg_encode_seconds):
         print(
             f"{result.model_name:60} "
+            f"{_format_param_count(result.param_count):>12} "
             f"{result.avg_encode_seconds * 1000:13.1f} "
             f"{result.min_encode_seconds * 1000:10.1f} "
             f"{result.max_encode_seconds * 1000:10.1f} "
             f"{str(result.embedding_shape):>14} "
         )
 
-    print("-" * 112)
+    print("-" * 135)
 
 
 def parse_args() -> argparse.Namespace:
@@ -123,6 +153,7 @@ def main():
 
     results: list[BenchmarkResult] = []
 
+    failed_count = 0
     for model_name in MODELS:
         print(f"\nBenchmarking: {model_name}")
         try:
@@ -134,9 +165,13 @@ def main():
             )
             results.append(result)
         except Exception as e:
+            failed_count += 1
             print(f"  FAILED: {e}")
 
     print_summary(results)
+    print(
+        f"\nCompleted benchmarking {len(results)} models with {failed_count} failures."
+    )
 
 
 if __name__ == "__main__":
