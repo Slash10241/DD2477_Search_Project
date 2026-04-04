@@ -1,0 +1,15 @@
+{% if q and results %}
+  <p>{{ results|length }} results for "{{ q }}"</p>
+  <ul>
+    {% for item in results %}
+      <li>
+        <h3>{{ item.title }}</h3>
+        <p>{{ item.snippet }}</p>
+      </li>
+    {% endfor %}
+  </ul>
+{% elif q %}
+  <p>No results for "{{ q }}"</p>
+{% else %}
+  <p>Type to search.</p>
+{% endif %}
