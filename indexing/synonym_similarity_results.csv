@@ -1,16 +1,16 @@
 model,avg_intra,avg_inter,separation,encode_seconds
-sentence-transformers/all-mpnet-base-v2,0.537017,0.265006,0.272011,0.043
-sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2,0.678130,0.415996,0.262134,0.024
+sentence-transformers/all-mpnet-base-v2,0.537017,0.265006,0.272011,0.041
+sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2,0.678130,0.415996,0.262134,0.034
 sentence-transformers/all-MiniLM-L6-v2,0.444721,0.259177,0.185544,0.023
-mixedbread-ai/mxbai-embed-large-v1,0.753394,0.577958,0.175435,0.252
-nomic-ai/nomic-embed-text-v1.5,0.631404,0.472683,0.158721,0.071
-BAAI/bge-m3,0.675316,0.543573,0.131743,0.213
-Qwen/Qwen3-Embedding-0.6B,0.737611,0.629171,0.108440,0.382
-microsoft/harrier-oss-v1-270m,0.757914,0.661312,0.096602,0.104
-BAAI/bge-large-en-v1.5,0.887052,0.814797,0.072255,0.065
-BAAI/bge-small-en-v1.5,0.866240,0.816080,0.050160,0.239
-intfloat/multilingual-e5-small,0.854395,0.836114,0.018281,0.024
-cointegrated/rubert-tiny2,0.876261,0.869636,0.006625,0.015
+mixedbread-ai/mxbai-embed-large-v1,0.753394,0.577958,0.175435,0.307
+nomic-ai/nomic-embed-text-v1.5,0.631404,0.472683,0.158721,0.068
+BAAI/bge-m3,0.675316,0.543573,0.131743,0.082
+Qwen/Qwen3-Embedding-0.6B,0.737611,0.629171,0.108440,0.437
+microsoft/harrier-oss-v1-270m,0.757914,0.661312,0.096602,0.100
+BAAI/bge-large-en-v1.5,0.887052,0.814797,0.072255,0.064
+BAAI/bge-small-en-v1.5,0.866240,0.816080,0.050160,0.229
+intfloat/multilingual-e5-small,0.854395,0.836114,0.018281,0.029
+cointegrated/rubert-tiny2,0.876261,0.869636,0.006625,0.018
 
 group_id,concept,BAAI/bge-small-en-v1.5,BAAI/bge-large-en-v1.5,BAAI/bge-m3,sentence-transformers/all-MiniLM-L6-v2,sentence-transformers/all-mpnet-base-v2,nomic-ai/nomic-embed-text-v1.5,cointegrated/rubert-tiny2,sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2,Qwen/Qwen3-Embedding-0.6B,intfloat/multilingual-e5-small,microsoft/harrier-oss-v1-270m,mixedbread-ai/mxbai-embed-large-v1
 1,happy,0.846608,0.854648,0.662697,0.351573,0.394701,0.547135,0.869430,0.638865,0.674909,0.876681,0.781200,0.656169
