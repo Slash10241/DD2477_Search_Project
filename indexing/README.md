@@ -44,3 +44,31 @@ uv run benchmark_embedding.py --device [auto|cpu|cuda]
 ```
 
 `--device auto` will use GPU if available, otherwise CPU. Texts and number of runs can be configured in `benchmark_embedding.py`.
+
+To test similarity:
+
+similarity_eval.py  ## test similarity on 2min chunks
+------------------
+Reads encoder_test_dataset.csv, encodes all texts with each model,
+then computes intra-group and inter-group cosine similarities.
+
+Good encoder: high intra-group score, low inter-group score,
+              large separation (= intra − inter).
+
+Usage:
+    python similarity_eval.py [--device auto|cpu|cuda] [--csv PATH] [--output PATH]
+
+synonym_similarity_eval.py   ## test similarity on synonyms
+--------------------------
+Reads synonym_test_dataset.csv, embeds each word with each model,
+then computes intra-group and inter-group cosine similarities.
+
+Single words are much harder than sentences — models that rely on
+contextual cues will behave very differently here than on paragraphs.
+
+Usage:
+    python synonym_similarity_eval.py [--device auto|cpu|cuda] [--csv PATH] [--output PATH]
+
+Notes:
+    Some models expect a prefix (e.g. nomic uses "search_query: " or
+    "search_document: "). Toggle PREFIX_MAP below to experiment.
