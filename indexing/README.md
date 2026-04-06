@@ -32,3 +32,15 @@ The `ES_LOCAL_API_KEY` can be found in the `.env` file in the `elastic-start-loc
 5. Check that the index exists in Kibana -> Data Management:
 
 Go to `http://localhost:5601` and login with username `elastic` and the password from the `.env` file (`ES_LOCAL_PASSWORD`).
+
+## Embedding model benchmarks
+
+To benchmark the embedding generation performance of different models, run:
+
+```bash
+# To run "google/embeddinggemma-300m", accept terms at https://huggingface.co/google/embeddinggemma-300m
+hf auth login # Some models like "google/embeddinggemma-300m" require authentication
+uv run benchmark_embedding.py --device [auto|cpu|cuda]
+```
+
+`--device auto` will use GPU if available, otherwise CPU. Texts and number of runs can be configured in `benchmark_embedding.py`.
