@@ -1,9 +1,10 @@
 from django.shortcuts import render
+from django.http import HttpRequest
 
-def index(request):
+def index(request: HttpRequest):
     return render(request, "index.html")
 
-def search(request):
+def search(request: HttpRequest):
     q = request.GET.get("q", "").strip()
 
     # Temporary placeholder results; replace with Elasticsearch call
