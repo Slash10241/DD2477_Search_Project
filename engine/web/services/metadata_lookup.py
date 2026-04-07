@@ -57,6 +57,9 @@ def _get_metadata_map() -> dict[str, ShowMetadata]:
                 _METADATA_CACHE = _load_metadata_map()
     return _METADATA_CACHE
 
+def warm_metadata_cache() -> int:
+    return len(_get_metadata_map())
+
 def enrich_results_with_metadata(results: Sequence[SearchResult]) -> Sequence[SearchResultPossiblyWithMetadata]:
     if not results:
         return results
