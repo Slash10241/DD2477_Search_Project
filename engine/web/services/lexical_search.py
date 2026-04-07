@@ -1,16 +1,13 @@
 from typing import TypedDict
 
 from elasticsearch.dsl import Search, query
-from .elastic_utils import search, ResultSource, source
+from .elastic_utils import search, SearchResult, source
 
-class LexicalResult(TypedDict):
-    score: float
-    source: ResultSource
 
 def lexical_query_builder(s: Search, query_text: str):
     return s.query(query.Match(text=query_text))
 
-def lexical_search(query_text: str, max_results: int = 20) -> list[LexicalResult]:
+def lexical_search(query_text: str, max_results: int = 20) -> list[SearchResult]:
     q = query_text.strip()
     if not q:
         return []

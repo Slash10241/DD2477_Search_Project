@@ -1,14 +1,9 @@
-from typing import TypedDict
-
 from elasticsearch.dsl import Search
 
-from .elastic_utils import ResultSource, search, source
+from .elastic_utils import SearchResult, search, source
 from .lexical_search import lexical_query_builder
 from .vector_search import vector_query_builder
 
-class HybridResult(TypedDict):
-	score: float
-	source: ResultSource
 
 def hybrid_query_builder(
 	s: Search,
@@ -24,7 +19,7 @@ def hybrid_query_builder(
 	return s.rank(
 		rrf={
 			"rank_constant": rrf_rank_constant,
-			"window_size": rrf_window_size,
+			"rank_window_size": rrf_window_size,
 		}
 	)
 
@@ -35,7 +30,7 @@ def hybrid_search(
 	max_results: int = 20,
 	rrf_rank_constant: int = 60,
 	rrf_window_size: int = 100,
-) -> list[HybridResult]:
+) -> list[SearchResult]:
 	q = query_text.strip()
 	if not q or k <= 0 or max_results <= 0:
 		return []

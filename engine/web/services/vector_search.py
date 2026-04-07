@@ -1,14 +1,9 @@
-from typing import TypedDict
-
 from elasticsearch.dsl import Search
-from .elastic_utils import ResultSource, search, source
+from .elastic_utils import SearchResult, search, source
 
 VECTOR_FIELD = "text_embedding"
 VECTOR_DIM = 384
 
-class VectorResult(TypedDict):
-	score: float
-	source: ResultSource
 
 def build_dummy_query_vector(query_text: str, dim: int = VECTOR_DIM) -> list[float]:
 	"""Build a deterministic dummy vector from query text for development/testing."""
@@ -39,7 +34,7 @@ def vector_search(
 	num_candidates: int,
 	k: int = 20,
 	max_results: int = 20,
-) -> list[VectorResult]:
+) -> list[SearchResult]:
 	q = query_text.strip()
 	if not q or k <= 0 or max_results <= 0:
 		return []

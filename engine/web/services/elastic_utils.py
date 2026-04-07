@@ -22,5 +22,9 @@ class ResultSource(TypedDict):
     start_time: float
     end_time: float
 
+class SearchResult(TypedDict):
+	score: float
+	source: ResultSource
+
 def source() -> list[str | Any]:
     return list(ResultSource.__required_keys__)
