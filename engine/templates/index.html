@@ -25,6 +25,7 @@
         hx-get="/search"
         hx-target="#results"
         hx-swap="innerHTML"
+        hx-indicator="#search-loading-indicator"
         hx-push-url="true">
         <div class="controls">
           <input type="hidden" name="mode" id="mode-input" value="{{ mode|default:'lexical' }}" />
@@ -40,6 +41,7 @@
             hx-include="[name='mode']"
             hx-target="#results"
             hx-swap="innerHTML"
+            hx-indicator="#search-loading-indicator"
             hx-push-url="true"
           />
 
@@ -72,6 +74,11 @@
               </button>
             </div>
           </div>
+        </div>
+
+        <div id="search-loading-indicator" class="search-loading" role="status" aria-live="polite">
+          <span class="search-loading-spinner" aria-hidden="true"></span>
+          <span>Searching...</span>
         </div>
       </form>
     </section>
