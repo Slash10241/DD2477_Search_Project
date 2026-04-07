@@ -3,8 +3,12 @@
   <ul>
     {% for item in results %}
       <li>
-        <h3>{{ item.title }}</h3>
-        <p>{{ item.snippet }}</p>
+        <h3>{{ item.source.show_filename_prefix }} / {{ item.source.episode_filename_prefix }}</h3>
+        <p>{{ item.source.text }}</p>
+        <small>
+          score={{ item.score|floatformat:3 }} |
+          {{ item.source.start_time|floatformat:1 }}s - {{ item.source.end_time|floatformat:1 }}s
+        </small>
       </li>
     {% endfor %}
   </ul>

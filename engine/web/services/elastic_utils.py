@@ -1,10 +1,16 @@
 from typing import Any, TypedDict
 from elasticsearch import Elasticsearch
 from elasticsearch.dsl import Search
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
 
 ES_HOST = "http://localhost:9200"
 INDEX_NAME = "podcasts"
-ES_CLIENT = Elasticsearch([ES_HOST])
+
+API_KEY = os.environ.get("API_KEY")
+ES_CLIENT = Elasticsearch(ES_HOST, api_key=API_KEY)
 
 def search():
     return Search(using=ES_CLIENT, index=INDEX_NAME)
