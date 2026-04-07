@@ -21,11 +21,14 @@
 
     <section class="search-panel">
       <form
+        class="search-form"
         hx-get="/search"
         hx-target="#results"
         hx-swap="innerHTML"
         hx-push-url="true">
         <div class="controls">
+          <input type="hidden" name="mode" id="mode-input" value="{{ mode|default:'lexical' }}" />
+
           <input
             type="text"
             name="q"
@@ -40,19 +43,35 @@
             hx-push-url="true"
           />
 
-          <select
-            name="mode"
-            hx-get="/search"
-            hx-trigger="change"
-            hx-include="[name='q']"
-            hx-target="#results"
-            hx-swap="innerHTML"
-            hx-push-url="true"
-          >
-            <option value="lexical" {% if mode == "lexical" %}selected{% endif %}>Lexical</option>
-            <option value="vector" {% if mode == "vector" %}selected{% endif %}>Vector</option>
-            <option value="hybrid" {% if mode == "hybrid" %}selected{% endif %}>Hybrid</option>
-          </select>
+          <div class="mode-picker" data-mode-picker>
+            <button
+              class="mode-picker-trigger"
+              type="button"
+              data-mode-trigger
+              aria-haspopup="listbox"
+              aria-expanded="false"
+            >
+              <span class="mode-picker-text" data-mode-label>
+                {% if mode == "vector" %}Vector{% elif mode == "hybrid" %}Hybrid{% else %}Lexical{% endif %}
+              </span>
+              <span class="mode-picker-chevron" aria-hidden="true"></span>
+            </button>
+
+            <div class="mode-picker-menu" role="listbox" aria-label="Search mode" data-mode-menu>
+              <button type="button" class="mode-picker-option {% if mode == 'lexical' %}is-active{% endif %}" data-mode-option="lexical">
+                <span class="mode-picker-option-title">Lexical</span>
+                <span class="mode-picker-option-subtitle">Exact text matching</span>
+              </button>
+              <button type="button" class="mode-picker-option {% if mode == 'vector' %}is-active{% endif %}" data-mode-option="vector">
+                <span class="mode-picker-option-title">Vector</span>
+                <span class="mode-picker-option-subtitle">Semantic similarity</span>
+              </button>
+              <button type="button" class="mode-picker-option {% if mode == 'hybrid' %}is-active{% endif %}" data-mode-option="hybrid">
+                <span class="mode-picker-option-title">Hybrid</span>
+                <span class="mode-picker-option-subtitle">RRF ranking mix</span>
+              </button>
+            </div>
+          </div>
         </div>
       </form>
     </section>
