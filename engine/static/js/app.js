@@ -79,4 +79,20 @@ document.addEventListener("DOMContentLoaded", () => {
 			closeMenu();
 		}
 	});
+
+	document.addEventListener("click", (event) => {
+		const toggle = event.target instanceof Element ? event.target.closest("[data-result-expand-button]") : null;
+		if (!toggle) {
+			return;
+		}
+
+		const shell = toggle.closest("[data-result-snippet-shell]");
+		if (!shell) {
+			return;
+		}
+
+		const isExpanded = shell.classList.toggle("is-expanded");
+		toggle.setAttribute("aria-expanded", String(isExpanded));
+		toggle.textContent = isExpanded ? "Show less" : "Show more";
+	});
 });

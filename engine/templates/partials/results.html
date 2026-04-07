@@ -1,6 +1,6 @@
 <div class="results-shell">
   <div class="results-header">
-    <span class="mode-label">Mode: {{ mode|default:"lexical" }}</span>
+    <span class="mode-label">Mode: {{ mode|default:"lexical"|capfirst }}</span>
     {% if q %}
       <p class="result-summary">
         {% if results %}
@@ -18,12 +18,35 @@
     <ul class="results-list">
       {% for item in results %}
         <li class="result-card">
-          <h3>{{ item.source.show_name|default:item.source.show_filename_prefix }} / {{ item.source.episode_name|default:item.source.episode_filename_prefix }}</h3>
-          <p class="result-snippet">{{ item.source.text }}</p>
+          <h3 class="result-show-title">{{ item.source.show_name|default:item.source.show_filename_prefix }}</h3>
+          <p class="result-episode-title">{{ item.source.episode_name|default:item.source.episode_filename_prefix }}</p>
+          <div class="result-snippet-shell" data-result-snippet-shell>
+            <div class="result-snippet-body">
+              <p class="result-snippet" data-result-snippet>{{ item.source.text }}</p>
+            </div>
+            <button
+              type="button"
+              class="result-expand-button"
+              data-result-expand-button
+              aria-expanded="false"
+            >
+              Show more
+            </button>
+          </div>
           <div class="result-meta">
-            <span class="pill">score {{ item.score|floatformat:3 }}</span>
-            <span class="pill">{{ item.source.start_time|floatformat:1 }}s</span>
-            <span class="pill">{{ item.source.end_time|floatformat:1 }}s</span>
+            <label class="pill pill-score" aria-label="Score {{ item.score|floatformat:3 }}">
+              <svg class="pill-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                <rect x="1.5" y="9" width="2.4" height="5.5" rx="0.8"></rect>
+                <rect x="6.8" y="5.5" width="2.4" height="9" rx="0.8"></rect>
+                <rect x="12.1" y="2.5" width="2.4" height="12" rx="0.8"></rect>
+              </svg>
+              <span>{{ item.score|floatformat:3 }}</span>
+            </label>
+            <label class="pill pill-window" aria-label="Time window {{ item.source.start_time|floatformat:1 }}s to {{ item.source.end_time|floatformat:1 }}s">
+              <span class="pill-window-start">{{ item.source.start_time|floatformat:1 }}s</span>
+              <span class="pill-window-separator">&ndash;</span>
+              <span class="pill-window-end">{{ item.source.end_time|floatformat:1 }}s</span>
+            </label>
           </div>
         </li>
       {% endfor %}
