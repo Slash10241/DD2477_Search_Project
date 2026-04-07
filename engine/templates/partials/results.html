@@ -15,11 +15,18 @@
   {% if error_message %}
     <p class="error">Search failed: {{ error_message }}</p>
   {% elif q and results %}
+    {% if summary_text %}
+      <section class="results-summary-block" aria-label="Search summary">
+        <h4 class="results-summary-title">Summary</h4>
+        <p class="results-summary-text">{{ summary_text }}</p>
+      </section>
+    {% endif %}
+
     <ul class="results-list">
       {% for item in results %}
         <li class="result-card">
-          <h3 class="result-show-title">{{ item.source.show_name|default:item.source.show_filename_prefix }}</h3>
-          <p class="result-episode-title">{{ item.source.episode_name|default:item.source.episode_filename_prefix }}</p>
+          <h3 class="result-show-title">{{ item.show_name|default:item.source.show_filename_prefix }}</h3>
+          <p class="result-episode-title">{{ item.episode_name|default:item.source.episode_filename_prefix }}</p>
           <div class="result-snippet-shell" data-result-snippet-shell>
             <div class="result-snippet-body">
               <p class="result-snippet" data-result-snippet>{{ item.source.text }}</p>

@@ -1,4 +1,4 @@
-from typing import Any, TypedDict
+from typing import Any, TypedDict, NotRequired
 from elasticsearch import Elasticsearch
 from elasticsearch.dsl import Search
 from dotenv import load_dotenv
@@ -25,6 +25,12 @@ class ResultSource(TypedDict):
 class SearchResult(TypedDict):
 	score: float
 	source: ResultSource
+
+class SearchResultWithOptionalMetadata(SearchResult):
+	show_name: NotRequired[str]
+	episode_name: NotRequired[str]
+      
+SearchResultPossiblyWithMetadata = SearchResult | SearchResultWithOptionalMetadata
 
 def source() -> list[str | Any]:
     return list(ResultSource.__required_keys__)

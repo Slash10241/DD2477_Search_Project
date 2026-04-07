@@ -3,10 +3,10 @@ from dotenv import load_dotenv
 import os
 from pathlib import Path
 from threading import Lock
-from typing import Any, TypedDict
+from typing import TypedDict, Sequence
+from .elastic_utils import SearchResult, SearchResultPossiblyWithMetadata, SearchResultWithOptionalMetadata
 
 load_dotenv()
-
 class ShowMetadata(TypedDict):
     show_name: str
     episodes: dict[str, str]
@@ -49,7 +49,6 @@ def _load_metadata_map() -> dict[str, ShowMetadata]:
 
     return metadata_map
 
-
 def _get_metadata_map() -> dict[str, ShowMetadata]:
     global _METADATA_CACHE
     if _METADATA_CACHE is None:
@@ -58,34 +57,36 @@ def _get_metadata_map() -> dict[str, ShowMetadata]:
                 _METADATA_CACHE = _load_metadata_map()
     return _METADATA_CACHE
 
-
-def enrich_results_with_metadata(results: list[Any]) -> list[Any]:
+def enrich_results_with_metadata(results: Sequence[SearchResult]) -> Sequence[SearchResultPossiblyWithMetadata]:
     if not results:
         return results
 
     metadata_map = _get_metadata_map()
     if not metadata_map:
         return results
-
-    for item in results:
-        source = item.get("source")
-        if not isinstance(source, dict):
-            continue
-
-        show_prefix = str(source.get("show_filename_prefix") or "").strip()
-        episode_prefix = str(source.get("episode_filename_prefix") or "").strip()
+    
+    def get_result_with_metadata(res: SearchResult) -> SearchResultPossiblyWithMetadata:
+        show_prefix = str(res["source"]["show_filename_prefix"]).strip()
+        episode_prefix = str(res["source"]["episode_filename_prefix"]).strip()
         if not show_prefix or not episode_prefix:
-            continue
+            return res
 
         show_metadata = metadata_map.get(show_prefix)
         if not show_metadata:
-            continue
+            return res
+        episode_name = show_metadata["episodes"].get(episode_prefix, "")
 
         if show_metadata["show_name"]:
-            source["show_name"] = show_metadata["show_name"]
-
-        episode_name = show_metadata["episodes"].get(episode_prefix, "")
-        if episode_name:
-            source["episode_name"] = episode_name
-
-    return results
+            enriched_res: SearchResultWithOptionalMetadata = {
+                "score": res["score"],
+                "source": res["source"],
+                "show_name": show_metadata["show_name"]
+            }
+            if episode_name:
+                enriched_res["episode_name"] = episode_name
+            
+            return enriched_res
+        
+        return res
+    
+    return list(map(get_result_with_metadata, results,))

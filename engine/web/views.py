@@ -3,6 +3,7 @@ from django.http import HttpRequest
 
 from .services.hybrid_search import hybrid_search
 from .services.lexical_search import lexical_search
+from .services.postprocessing import rerank_and_summarize
 from .services.metadata_lookup import enrich_results_with_metadata
 from .services.vector_search import vector_search
 
@@ -10,7 +11,7 @@ VALID_SEARCH_MODES = {"lexical", "vector", "hybrid"}
 DEFAULT_SEARCH_MODE = "lexical"
 
 def index(request: HttpRequest):
-    return render(request, "index.html", {"mode": DEFAULT_SEARCH_MODE})
+    return render(request, "index.html", {"mode": DEFAULT_SEARCH_MODE, "summary_text": ""})
 
 def search(request: HttpRequest):
     q = (request.GET.get("q") or "").strip()
@@ -18,6 +19,7 @@ def search(request: HttpRequest):
     mode = requested_mode if requested_mode in VALID_SEARCH_MODES else DEFAULT_SEARCH_MODE
 
     results = []
+    summary_text = ""
     error_message = ""
     if q:
         try:
@@ -29,6 +31,9 @@ def search(request: HttpRequest):
                 results = lexical_search(q)
 
             results = enrich_results_with_metadata(results)
+            postprocess_output = rerank_and_summarize(results)
+            results = postprocess_output["results"]
+            summary_text = postprocess_output["summary"]
         except Exception as exc:
             error_message = str(exc)
 
@@ -40,6 +45,7 @@ def search(request: HttpRequest):
             "q": q,
             "mode": mode,
             "results": results,
+            "summary_text": summary_text,
             "error_message": error_message,
         },
     )

@@ -314,6 +314,29 @@ select {
 	color: var(--color-text-muted);
 }
 
+.results-summary-block {
+	margin: 0 0 0.9rem;
+	padding: 0.85rem 0.95rem;
+	border: 1px solid rgba(79, 156, 255, 0.24);
+	border-radius: var(--radius-md);
+	background: linear-gradient(180deg, rgba(79, 156, 255, 0.12) 0%, rgba(24, 37, 64, 0.38) 100%);
+}
+
+.results-summary-title {
+	margin: 0 0 0.35rem;
+	font-size: 0.88rem;
+	font-weight: 700;
+	letter-spacing: 0.02em;
+	color: var(--color-accent-blue);
+	text-transform: uppercase;
+}
+
+.results-summary-text {
+	margin: 0;
+	line-height: 1.55;
+	color: var(--color-text-muted);
+}
+
 .results-list {
 	list-style: none;
 	margin: 0;
