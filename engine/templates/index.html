@@ -10,26 +10,52 @@
 </head>
 <body>
   <main class="container">
-    <h1>Search</h1>
+    <section class="hero">
+      <span class="eyebrow">Podcast Search Lab</span>
+      <h1>Search transcripts with lexical, vector, or hybrid ranking.</h1>
+      <p>
+        Use the mode picker to switch between exact text matching, semantic vector search, and RRF hybrid search.
+        Results update live with HTMX.
+      </p>
+    </section>
 
-    <form
-      hx-get="/search"
-      hx-target="#results"
-      hx-swap="innerHTML"
-      hx-push-url="true">
-      <input
-        type="text"
-        name="q"
-        value="{{ q|default:'' }}"
-        placeholder="Search..."
-        autocomplete="off"
+    <section class="search-panel">
+      <form
         hx-get="/search"
-        hx-trigger="keyup changed delay:300ms"
         hx-target="#results"
         hx-swap="innerHTML"
-        hx-push-url="true"
-      />
-    </form>
+        hx-push-url="true">
+        <div class="controls">
+          <input
+            type="text"
+            name="q"
+            value="{{ q|default:'' }}"
+            placeholder="Search transcripts..."
+            autocomplete="off"
+            hx-get="/search"
+            hx-trigger="keyup changed delay:300ms"
+            hx-include="[name='mode']"
+            hx-target="#results"
+            hx-swap="innerHTML"
+            hx-push-url="true"
+          />
+
+          <select
+            name="mode"
+            hx-get="/search"
+            hx-trigger="change"
+            hx-include="[name='q']"
+            hx-target="#results"
+            hx-swap="innerHTML"
+            hx-push-url="true"
+          >
+            <option value="lexical" {% if mode == "lexical" %}selected{% endif %}>Lexical</option>
+            <option value="vector" {% if mode == "vector" %}selected{% endif %}>Vector</option>
+            <option value="hybrid" {% if mode == "hybrid" %}selected{% endif %}>Hybrid</option>
+          </select>
+        </div>
+      </form>
+    </section>
 
     <section id="results">
       {% include "partials/results.html" %}

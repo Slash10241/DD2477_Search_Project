@@ -1,19 +1,36 @@
-{% if q and results %}
-  <p>{{ results|length }} results for "{{ q }}"</p>
-  <ul>
-    {% for item in results %}
-      <li>
-        <h3>{{ item.source.show_filename_prefix }} / {{ item.source.episode_filename_prefix }}</h3>
-        <p>{{ item.source.text }}</p>
-        <small>
-          score={{ item.score|floatformat:3 }} |
-          {{ item.source.start_time|floatformat:1 }}s - {{ item.source.end_time|floatformat:1 }}s
-        </small>
-      </li>
-    {% endfor %}
-  </ul>
-{% elif q %}
-  <p>No results for "{{ q }}"</p>
-{% else %}
-  <p>Type to search.</p>
-{% endif %}
+<div class="results-shell">
+  <div class="results-header">
+    <span class="mode-label">Mode: {{ mode|default:"lexical" }}</span>
+    {% if q %}
+      <p class="result-summary">
+        {% if results %}
+          {{ results|length }} results for "{{ q }}"
+        {% else %}
+          No results for "{{ q }}"
+        {% endif %}
+      </p>
+    {% endif %}
+  </div>
+
+  {% if error_message %}
+    <p class="error">Search failed: {{ error_message }}</p>
+  {% elif q and results %}
+    <ul class="results-list">
+      {% for item in results %}
+        <li class="result-card">
+          <h3>{{ item.source.show_name|default:item.source.show_filename_prefix }} / {{ item.source.episode_name|default:item.source.episode_filename_prefix }}</h3>
+          <p class="result-snippet">{{ item.source.text }}</p>
+          <div class="result-meta">
+            <span class="pill">score {{ item.score|floatformat:3 }}</span>
+            <span class="pill">{{ item.source.start_time|floatformat:1 }}s</span>
+            <span class="pill">{{ item.source.end_time|floatformat:1 }}s</span>
+          </div>
+        </li>
+      {% endfor %}
+    </ul>
+  {% elif q %}
+    <p class="empty-state">Try a different query or switch search modes.</p>
+  {% else %}
+    <p class="empty-state">Type to search transcripts.</p>
+  {% endif %}
+</div>
