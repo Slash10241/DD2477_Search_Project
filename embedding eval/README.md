@@ -1,5 +1,5 @@
 
-# Embedding + Leranking Evaluation for Podcast Search
+# Embedding + Reranking Evaluation for Podcast Search
 
 This code evaluates different embedding models for the podcast search project.
 
