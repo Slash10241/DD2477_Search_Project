@@ -162,6 +162,22 @@ def save_pretty_text(
         f.write("\n".join(lines))
 
 
+def save_checkpoint(
+    output_json_path: str,
+    summary_rows: list[dict],
+    all_results: list[dict],
+    config: dict,
+) -> None:
+    payload = {
+        "config": config,
+        "summary": summary_rows,
+        "results": all_results,
+    }
+
+    with open(output_json_path, "w", encoding="utf-8") as f:
+        json.dump(payload, f, ensure_ascii=False, indent=2)
+
+        
 def evaluate_model(
     es: Elasticsearch,
     model_name: str,
@@ -172,6 +188,10 @@ def evaluate_model(
     judge_model: str,
     num_judgments: int,
     temperature: float,
+    output_json_path: str,
+    summary_rows_so_far: list[dict],
+    all_results_so_far: list[dict],
+    config: dict,
 ) -> tuple[dict, list[dict]]:
     print(f"\nEvaluating model: {model_name}")
     print("-" * 100)
@@ -193,63 +213,113 @@ def evaluate_model(
     for query in queries:
         print(f"\nQuery: {query}")
 
-        retrieved_results = ev.retrieve_top_k_with_loaded_model(
-            query=query,
-            model=model,
-            chunk_docs=chunk_docs,
-            chunk_embeddings=chunk_embeddings,
-            top_k=top_k,
-        )
-
-        judged_results = ev.judge_retrieved_results(
-            query=query,
-            model_name=model_name,
-            retrieved_results=retrieved_results,
-            judge_model=judge_model,
-            num_judgments=num_judgments,
-            temperature=temperature,
-        )
-
-        relevances = [r.relevance for r in sorted(judged_results, key=lambda x: x.rank)]
-        query_metrics = {
-            f"P@{top_k}": precision_at_k(relevances, top_k),
-            "MRR": reciprocal_rank(relevances),
-            f"nDCG@{top_k}": ndcg_at_k(relevances, top_k),
-        }
-        per_query_metrics.append(query_metrics)
-
-        print(
-            f"  P@{top_k}={query_metrics[f'P@{top_k}']:.4f}, "
-            f"MRR={query_metrics['MRR']:.4f}, "
-            f"nDCG@{top_k}={query_metrics[f'nDCG@{top_k}']:.4f}"
-        )
-
-        for jr in judged_results:
-            all_model_results.append(
-                {
-                    "query": jr.query,
-                    "model_name": jr.model_name,
-                    "clip_id": jr.clip_id,
-                    "rank": jr.rank,
-                    "retrieval_score": jr.retrieval_score,
-                    "relevance": jr.relevance,
-                    "judge_reason": jr.judge_reason,
-                    "judge_scores": jr.judge_scores,
-                    "judge_reasons": jr.judge_reasons,
-                    "judge_average_score": jr.judge_average_score,
-                    "episode_filename_prefix": jr.episode_filename_prefix,
-                    "show_filename_prefix": jr.show_filename_prefix,
-                    "start_time": jr.start_time,
-                    "end_time": jr.end_time,
-                    "text": jr.text,
-                }
+        try:
+            retrieved_results = ev.retrieve_top_k_with_loaded_model(
+                query=query,
+                model=model,
+                chunk_docs=chunk_docs,
+                chunk_embeddings=chunk_embeddings,
+                top_k=top_k,
             )
+
+            judged_results = ev.judge_retrieved_results(
+                query=query,
+                model_name=model_name,
+                retrieved_results=retrieved_results,
+                judge_model=judge_model,
+                num_judgments=num_judgments,
+                temperature=temperature,
+            )
+
+            relevances = [r.relevance for r in sorted(judged_results, key=lambda x: x.rank)]
+            query_metrics = {
+                "query": query,
+                f"P@{top_k}": precision_at_k(relevances, top_k),
+                "MRR": reciprocal_rank(relevances),
+                f"nDCG@{top_k}": ndcg_at_k(relevances, top_k),
+            }
+            per_query_metrics.append(query_metrics)
+
+            print(
+                f"  P@{top_k}={query_metrics[f'P@{top_k}']:.4f}, "
+                f"MRR={query_metrics['MRR']:.4f}, "
+                f"nDCG@{top_k}={query_metrics[f'nDCG@{top_k}']:.4f}"
+            )
+
+            for jr in judged_results:
+                all_model_results.append(
+                    {
+                        "query": jr.query,
+                        "model_name": jr.model_name,
+                        "clip_id": jr.clip_id,
+                        "rank": jr.rank,
+                        "retrieval_score": jr.retrieval_score,
+                        "relevance": jr.relevance,
+                        "judge_reason": jr.judge_reason,
+                        "judge_scores": jr.judge_scores,
+                        "judge_reasons": jr.judge_reasons,
+                        "judge_average_score": jr.judge_average_score,
+                        "episode_filename_prefix": jr.episode_filename_prefix,
+                        "show_filename_prefix": jr.show_filename_prefix,
+                        "start_time": jr.start_time,
+                        "end_time": jr.end_time,
+                        "text": jr.text,
+                    }
+                )
+
+            # save partial progress after every successful query
+            partial_summary = {
+                "model": model_name,
+                f"P@{top_k}": float(np.mean([m[f"P@{top_k}"] for m in per_query_metrics])),
+                "MRR": float(np.mean([m["MRR"] for m in per_query_metrics])),
+                f"nDCG@{top_k}": float(np.mean([m[f"nDCG@{top_k}"] for m in per_query_metrics])),
+                "embedding_time_seconds": embedding_time_seconds,
+                "completed_queries": len(per_query_metrics),
+                "total_queries": len(queries),
+            }
+
+            current_summary_rows = summary_rows_so_far + [partial_summary]
+            current_all_results = all_results_so_far + all_model_results
+
+            save_checkpoint(
+                output_json_path=output_json_path,
+                summary_rows=current_summary_rows,
+                all_results=current_all_results,
+                config=config,
+            )
+
+        except Exception as e:
+            print(f"  Failed on query '{query}': {e}")
+
+            partial_summary = {
+                "model": model_name,
+                f"P@{top_k}": float(np.mean([m[f"P@{top_k}"] for m in per_query_metrics])) if per_query_metrics else 0.0,
+                "MRR": float(np.mean([m["MRR"] for m in per_query_metrics])) if per_query_metrics else 0.0,
+                f"nDCG@{top_k}": float(np.mean([m[f"nDCG@{top_k}"] for m in per_query_metrics])) if per_query_metrics else 0.0,
+                "embedding_time_seconds": embedding_time_seconds,
+                "completed_queries": len(per_query_metrics),
+                "total_queries": len(queries),
+                "last_error": str(e),
+            }
+
+            current_summary_rows = summary_rows_so_far + [partial_summary]
+            current_all_results = all_results_so_far + all_model_results
+
+            save_checkpoint(
+                output_json_path=output_json_path,
+                summary_rows=current_summary_rows,
+                all_results=current_all_results,
+                config=config,
+            )
+
+            # continue instead of crashing whole run
+            continue
 
     summary = {
         "model": model_name,
-        f"P@{top_k}": float(np.mean([m[f"P@{top_k}"] for m in per_query_metrics])),
-        "MRR": float(np.mean([m["MRR"] for m in per_query_metrics])),
-        f"nDCG@{top_k}": float(np.mean([m[f"nDCG@{top_k}"] for m in per_query_metrics])),
+        f"P@{top_k}": float(np.mean([m[f"P@{top_k}"] for m in per_query_metrics])) if per_query_metrics else 0.0,
+        "MRR": float(np.mean([m["MRR"] for m in per_query_metrics])) if per_query_metrics else 0.0,
+        f"nDCG@{top_k}": float(np.mean([m[f"nDCG@{top_k}"] for m in per_query_metrics])) if per_query_metrics else 0.0,
         "embedding_time_seconds": embedding_time_seconds,
     }
 
@@ -372,6 +442,21 @@ def main() -> None:
             judge_model=args.judge_model,
             num_judgments=args.num_judgments,
             temperature=args.temperature,
+            output_json_path=args.output_json,
+            summary_rows_so_far=summary_rows,
+            all_results_so_far=all_results,
+            config={
+                "es_host": ev.ES_HOST,
+                "index_name": ev.INDEX_NAME,
+                "chunk_limit": args.chunk_limit,
+                "top_k": args.top_k,
+                "device": args.device,
+                "judge_model": args.judge_model,
+                "num_judgments": args.num_judgments,
+                "temperature": args.temperature,
+                "queries": queries,
+                "models": models_to_test,
+            },
         )
         summary_rows.append(summary)
         all_results.extend(model_results)
