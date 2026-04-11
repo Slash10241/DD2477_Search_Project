@@ -1,18 +1,8 @@
 from elasticsearch.dsl import Search
 from .elastic_utils import SearchResult, search, source
+from .embedding_utils import get_query_embedding_vector
 
-VECTOR_FIELD = "text_embedding"
-VECTOR_DIM = 384
-
-
-def build_dummy_query_vector(query_text: str, dim: int = VECTOR_DIM) -> list[float]:
-	"""Build a deterministic dummy vector from query text for development/testing."""
-	q = query_text.strip()
-	if not q:
-		return [0.0] * dim
-
-	seed = sum(ord(ch) for ch in q)
-	return [((seed + i) % 97) / 97.0 for i in range(dim)]
+VECTOR_FIELD = "embedding"
 
 def vector_query_builder(
 	s: Search,
@@ -24,7 +14,7 @@ def vector_query_builder(
 	effective_k = max(k, max_results)
 	return s.knn(
 		field=VECTOR_FIELD,
-		query_vector=build_dummy_query_vector(q),
+		query_vector=get_query_embedding_vector(q),
 		k=effective_k,
 		num_candidates=max(num_candidates, effective_k),
 	)
