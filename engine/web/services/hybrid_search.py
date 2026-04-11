@@ -4,7 +4,6 @@ from .elastic_utils import SearchResult, search, source
 from .lexical_search import lexical_query_builder
 from .vector_search import vector_query_builder
 
-
 def hybrid_query_builder(
 	s: Search,
 	q: str,

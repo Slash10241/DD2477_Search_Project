@@ -1,8 +1,5 @@
-from typing import TypedDict
-
 from elasticsearch.dsl import Search, query
 from .elastic_utils import search, SearchResult, source
-
 
 def lexical_query_builder(s: Search, query_text: str):
     return s.query(query.Match(text=query_text))
