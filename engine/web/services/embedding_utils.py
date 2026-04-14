@@ -1,14 +1,34 @@
-from functools import lru_cache
+from threading import Lock
 
 from sentence_transformers import SentenceTransformer
 
 MODEL_NAME = "sentence-transformers/all-mpnet-base-v2"
 VECTOR_DIM = 768
 
+_model_lock = Lock()
+_embedding_model: SentenceTransformer | None = None
 
-@lru_cache(maxsize=1)
+
 def get_embedding_model() -> SentenceTransformer:
-    return SentenceTransformer(MODEL_NAME)
+    global _embedding_model
+
+    if _embedding_model is not None:
+        return _embedding_model
+
+    with _model_lock:
+        if _embedding_model is not None:
+            return _embedding_model
+
+        _embedding_model = SentenceTransformer(MODEL_NAME)
+        return _embedding_model
+
+
+def preload_embedding_model() -> bool:
+    try:
+        get_embedding_model()
+        return True
+    except Exception:
+        return False
 
 
 def get_query_embedding_vector(query_text: str) -> list[float]:
