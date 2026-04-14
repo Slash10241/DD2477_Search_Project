@@ -1,0 +1,41 @@
+group_id,concept,part_of_speech,synonym_id,word,proximity_note
+1,happy,adjective,1,joyful,near-identical
+1,happy,adjective,2,elated,stronger intensity
+1,happy,adjective,3,content,milder / quieter form
+1,happy,adjective,4,cheerful,behaviorally expressed
+2,angry,adjective,1,furious,near-identical (intense)
+2,angry,adjective,2,irate,formal register
+2,angry,adjective,3,livid,extreme intensity
+2,angry,adjective,4,indignant,morally-flavoured anger
+3,sad,adjective,1,sorrowful,near-identical (literary)
+3,sad,adjective,2,melancholy,chronic / reflective sadness
+3,sad,adjective,3,dejected,situational / defeated
+3,sad,adjective,4,forlorn,lonely-tinged sadness
+4,fast,adjective,1,swift,near-identical
+4,fast,adjective,2,rapid,neutral/technical
+4,fast,adjective,3,brisk,moderate pace
+4,fast,adjective,4,hasty,implies carelessness
+5,smart,adjective,1,intelligent,near-identical
+5,smart,adjective,2,clever,practical wit
+5,smart,adjective,3,astute,shrewd / perceptive
+5,smart,adjective,4,brilliant,high intensity
+6,afraid,adjective,1,scared,near-identical (informal)
+6,afraid,adjective,2,terrified,extreme intensity
+6,afraid,adjective,3,anxious,anticipatory fear
+6,afraid,adjective,4,apprehensive,mild/cognitive fear
+7,beautiful,adjective,1,gorgeous,near-identical (strong)
+7,beautiful,adjective,2,stunning,striking visual impact
+7,beautiful,adjective,3,lovely,warm/gentle register
+7,beautiful,adjective,4,radiant,glowing quality
+8,tired,adjective,1,exhausted,near-identical (intense)
+8,tired,adjective,2,weary,physical + emotional drain
+8,tired,adjective,3,fatigued,clinical/neutral register
+8,tired,adjective,4,drained,energy-depleted metaphor
+9,strange,adjective,1,peculiar,near-identical
+9,strange,adjective,2,bizarre,stronger/more extreme
+9,strange,adjective,3,eccentric,person-focused oddness
+9,strange,adjective,4,uncanny,unsettling quality
+10,big,adjective,1,large,near-identical (neutral)
+10,big,adjective,2,enormous,strong intensity
+10,big,adjective,3,vast,spatial / abstract scale
+10,big,adjective,4,colossal,extreme / hyperbolic

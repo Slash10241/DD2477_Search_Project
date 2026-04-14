@@ -1,0 +1,25 @@
+model,avg_intra,avg_inter,separation,encode_seconds
+sentence-transformers/all-mpnet-base-v2,0.685710,0.266148,0.419562,0.355
+sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2,0.583477,0.246935,0.336542,0.176
+Qwen/Qwen3-Embedding-0.6B,0.691204,0.360602,0.330602,1.083
+sentence-transformers/all-MiniLM-L6-v2,0.608849,0.303045,0.305804,0.066
+mixedbread-ai/mxbai-embed-large-v1,0.833105,0.576836,0.256269,0.460
+microsoft/harrier-oss-v1-270m,0.700219,0.461547,0.238672,0.567
+nomic-ai/nomic-embed-text-v1.5,0.799551,0.567422,0.232129,0.568
+BAAI/bge-large-en-v1.5,0.827532,0.632568,0.194964,0.918
+BAAI/bge-m3,0.746421,0.560409,0.186012,1.146
+BAAI/bge-small-en-v1.5,0.833398,0.659664,0.173734,0.372
+intfloat/multilingual-e5-small,0.915362,0.871030,0.044333,0.319
+cointegrated/rubert-tiny2,0.957455,0.921699,0.035756,0.065
+
+group_id,topic,BAAI/bge-small-en-v1.5,BAAI/bge-large-en-v1.5,BAAI/bge-m3,sentence-transformers/all-MiniLM-L6-v2,sentence-transformers/all-mpnet-base-v2,nomic-ai/nomic-embed-text-v1.5,cointegrated/rubert-tiny2,sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2,Qwen/Qwen3-Embedding-0.6B,intfloat/multilingual-e5-small,microsoft/harrier-oss-v1-270m,mixedbread-ai/mxbai-embed-large-v1
+1,Podcast intro: Marvel rewatch,0.921315,0.883953,0.835551,0.778205,0.893893,0.889806,0.966052,0.851735,0.861858,0.947499,0.887841,0.906087
+2,Career change decision,0.848249,0.843675,0.750551,0.655759,0.790251,0.841820,0.971093,0.601990,0.724327,0.920588,0.433113,0.865723
+3,First solo travel experience,0.860650,0.839220,0.735112,0.681049,0.695242,0.832179,0.953743,0.597722,0.700585,0.913234,0.769527,0.856283
+4,Learning a musical instrument as an adult,0.858828,0.841159,0.779366,0.625861,0.658615,0.827436,0.963381,0.627174,0.749995,0.924526,0.769865,0.860352
+5,Mentoring a younger colleague,0.821758,0.847222,0.724695,0.477412,0.496527,0.720147,0.937749,0.464605,0.633674,0.905452,0.792887,0.843262
+6,Rediscovering a childhood hobby,0.759947,0.766912,0.679403,0.460281,0.597058,0.749611,0.956650,0.441425,0.561878,0.907474,0.420506,0.728678
+7,Getting into competitive running,0.883025,0.844387,0.795385,0.722024,0.742152,0.825175,0.961431,0.581094,0.718686,0.915145,0.785209,0.862956
+8,Living abroad for the first time,0.789676,0.804659,0.687457,0.524552,0.685037,0.754522,0.959510,0.475109,0.648811,0.907207,0.687792,0.798014
+9,Organizing a community event,0.736757,0.760994,0.688300,0.514178,0.611738,0.761177,0.960079,0.506143,0.610384,0.899357,0.659525,0.759603
+10,Navigating a difficult family conversation,0.853773,0.843139,0.788394,0.649172,0.686584,0.793635,0.944865,0.687773,0.701842,0.913142,0.795921,0.850098
