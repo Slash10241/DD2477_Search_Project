@@ -1,0 +1,92 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Search</title>
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+</head>
+<body>
+  <main class="container">
+    <section class="hero">
+      <span class="eyebrow">DD2477 / Group 3 / Podcast Search</span>
+      <h1>Search transcripts with lexical, vector, or hybrid ranking.</h1>
+      <p>
+        Use the mode picker to switch between exact text matching, semantic vector search, and RRF hybrid search.
+        Results update live with HTMX.
+      </p>
+    </section>
+
+    <section class="search-panel">
+      <form
+        class="search-form"
+        hx-get="/search"
+        hx-target="#results"
+        hx-swap="innerHTML"
+        hx-indicator="#search-loading-indicator"
+        hx-push-url="true">
+        <div class="controls">
+          <input type="hidden" name="mode" id="mode-input" value="{{ mode|default:'lexical' }}" />
+
+          <input
+            type="text"
+            name="q"
+            value="{{ q|default:'' }}"
+            placeholder="Search transcripts..."
+            autocomplete="off"
+            hx-get="/search"
+            hx-trigger="keyup changed delay:300ms"
+            hx-include="[name='mode']"
+            hx-target="#results"
+            hx-swap="innerHTML"
+            hx-indicator="#search-loading-indicator"
+            hx-push-url="true"
+          />
+
+          <div class="mode-picker" data-mode-picker>
+            <button
+              class="mode-picker-trigger"
+              type="button"
+              data-mode-trigger
+              aria-haspopup="listbox"
+              aria-expanded="false"
+            >
+              <span class="mode-picker-text" data-mode-label>
+                {% if mode == "vector" %}Vector{% elif mode == "hybrid" %}Hybrid{% else %}Lexical{% endif %}
+              </span>
+              <span class="mode-picker-chevron" aria-hidden="true"></span>
+            </button>
+
+            <div class="mode-picker-menu" role="listbox" aria-label="Search mode" data-mode-menu>
+              <button type="button" class="mode-picker-option {% if mode == 'lexical' %}is-active{% endif %}" data-mode-option="lexical">
+                <span class="mode-picker-option-title">Lexical</span>
+                <span class="mode-picker-option-subtitle">Exact text matching</span>
+              </button>
+              <button type="button" class="mode-picker-option {% if mode == 'vector' %}is-active{% endif %}" data-mode-option="vector">
+                <span class="mode-picker-option-title">Vector</span>
+                <span class="mode-picker-option-subtitle">Semantic similarity</span>
+              </button>
+              <button type="button" class="mode-picker-option {% if mode == 'hybrid' %}is-active{% endif %}" data-mode-option="hybrid">
+                <span class="mode-picker-option-title">Hybrid</span>
+                <span class="mode-picker-option-subtitle">RRF ranking mix</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div id="search-loading-indicator" class="search-loading" role="status" aria-live="polite">
+          <span class="search-loading-spinner" aria-hidden="true"></span>
+          <span>Searching...</span>
+        </div>
+      </form>
+    </section>
+
+    <section id="results">
+      {% include "partials/results.html" %}
+    </section>
+  </main>
+  <script src="{% static 'js/app.js' %}"></script>
+</body>
+</html>

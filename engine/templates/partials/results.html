@@ -1,0 +1,71 @@
+{% load time_filters %}
+
+<div class="results-shell">
+  <div class="results-header">
+    <span class="mode-label">Mode: {{ mode|default:"lexical"|capfirst }}</span>
+    {% if retrieval_duration_ms is not None %}
+      <span class="retrieval-duration">Retrieved in {{ retrieval_duration_ms|floatformat:1 }} ms</span>
+    {% endif %}
+    {% if q %}
+      <p class="result-summary">
+        {% if results %}
+          {{ results|length }} results for "{{ q }}"
+        {% else %}
+          No results for "{{ q }}"
+        {% endif %}
+      </p>
+    {% endif %}
+  </div>
+
+  {% if error_message %}
+    <p class="error">Search failed: {{ error_message }}</p>
+  {% elif q and results %}
+    {% if summary_text %}
+      <section class="results-summary-block" aria-label="Search summary">
+        <h4 class="results-summary-title">Summary</h4>
+        <p class="results-summary-text">{{ summary_text }}</p>
+      </section>
+    {% endif %}
+
+    <ul class="results-list">
+      {% for item in results %}
+        <li class="result-card">
+          <h3 class="result-show-title">{{ item.show_name|default:item.source.show_filename_prefix }}</h3>
+          <p class="result-episode-title">{{ item.episode_name|default:item.source.episode_filename_prefix }}</p>
+          <div class="result-snippet-shell" data-result-snippet-shell>
+            <div class="result-snippet-body">
+              <p class="result-snippet" data-result-snippet>{{ item.source.text }}</p>
+            </div>
+            <button
+              type="button"
+              class="result-expand-button"
+              data-result-expand-button
+              aria-expanded="false"
+            >
+              Show more
+            </button>
+          </div>
+          <div class="result-meta">
+            <label class="pill pill-score" aria-label="Score {{ item.score|floatformat:3 }}">
+              <svg class="pill-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                <rect x="1.5" y="9" width="2.4" height="5.5" rx="0.8"></rect>
+                <rect x="6.8" y="5.5" width="2.4" height="9" rx="0.8"></rect>
+                <rect x="12.1" y="2.5" width="2.4" height="12" rx="0.8"></rect>
+              </svg>
+              <span>{{ item.score|floatformat:3 }}</span>
+            </label>
+            <label class="pill pill-window" aria-label="Time window {{ item.source.start_time|seconds_to_hms }} to {{ item.source.end_time|seconds_to_hms }}">
+              <span class="pill-window-start">{{ item.source.start_time|seconds_to_hms }}</span>
+              <span class="pill-window-separator">&ndash;</span>
+              <span class="pill-window-end">{{ item.source.end_time|seconds_to_hms }}</span>
+            </label>
+          </div>
+        </li>
+      {% endfor %}
+    </ul>
+  {% elif q %}
+    <p class="empty-state">Try a different query or switch search modes.</p>
+  {% else %}
+    <p class="empty-state">Type to search transcripts.</p>
+  {% endif %}
+</div>
