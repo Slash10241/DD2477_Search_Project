@@ -1,13 +1,20 @@
+from functools import lru_cache
+
+from sentence_transformers import SentenceTransformer
+
+MODEL_NAME = "sentence-transformers/all-mpnet-base-v2"
 VECTOR_DIM = 768
 
-def build_dummy_query_vector(query_text: str, dim: int = VECTOR_DIM) -> list[float]:
-	"""Build a deterministic dummy vector from query text for development/testing."""
-	q = query_text.strip()
-	if not q:
-		return [0.0] * dim
 
-	seed = sum(ord(ch) for ch in q)
-	return [((seed + i) % 97) / 97.0 for i in range(dim)]
+@lru_cache(maxsize=1)
+def get_embedding_model() -> SentenceTransformer:
+    return SentenceTransformer(MODEL_NAME)
+
 
 def get_query_embedding_vector(query_text: str) -> list[float]:
-	return build_dummy_query_vector(query_text, VECTOR_DIM)
+    q = query_text.strip()
+    if not q:
+        return [0.0] * VECTOR_DIM
+
+    vector = get_embedding_model().encode(q)
+    return vector.tolist()
