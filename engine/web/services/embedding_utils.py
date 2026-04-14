@@ -1,9 +1,13 @@
+import logging
+import time
 from threading import Lock
 
 from sentence_transformers import SentenceTransformer
 
 MODEL_NAME = "sentence-transformers/all-mpnet-base-v2"
 VECTOR_DIM = 768
+
+logger = logging.getLogger(__name__)
 
 _model_lock = Lock()
 _embedding_model: SentenceTransformer | None = None
@@ -36,5 +40,8 @@ def get_query_embedding_vector(query_text: str) -> list[float]:
     if not q:
         return [0.0] * VECTOR_DIM
 
+    start = time.perf_counter()
     vector = get_embedding_model().encode(q)
+    elapsed_ms = (time.perf_counter() - start) * 1000
+    logger.warning("Query embedding generated in %d ms (chars=%d)", elapsed_ms, len(q))
     return vector.tolist()
