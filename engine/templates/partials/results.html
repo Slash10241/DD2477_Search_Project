@@ -22,7 +22,16 @@
   {% elif q and results %}
     {% if summary_text %}
       <section class="results-summary-block" aria-label="Search summary">
-        <h4 class="results-summary-title">Summary</h4>
+        <div class="results-summary-header">
+          <h4 class="results-summary-title">Summary</h4>
+          <button
+            type="button"
+            class="summary-llm-button"
+            data-summary-llm
+          >
+            ✦ Summarize
+          </button>
+        </div>
         <p class="results-summary-text">{{ summary_text }}</p>
       </section>
     {% endif %}

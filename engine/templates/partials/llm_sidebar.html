@@ -1,0 +1,96 @@
+<aside class="llm-sidebar" data-llm-sidebar>
+  <button
+    type="button"
+    class="llm-sidebar-toggle"
+    data-llm-sidebar-toggle
+    aria-expanded="false"
+    aria-controls="llm-sidebar-panel"
+  >
+    <span class="llm-sidebar-toggle-icon">✦</span>
+    <span class="llm-sidebar-toggle-text">LLM</span>
+  </button>
+
+  <div class="llm-sidebar-panel" id="llm-sidebar-panel" data-llm-sidebar-panel>
+    <div class="llm-sidebar-header">
+      <div>
+        <p class="llm-sidebar-eyebrow">Assistant tools</p>
+        <h2 class="llm-sidebar-title">LLM Panel</h2>
+      </div>
+      <button
+        type="button"
+        class="llm-sidebar-close"
+        data-llm-sidebar-close
+        aria-label="Close LLM sidebar"
+      >
+        ×
+      </button>
+    </div>
+
+    <div class="llm-sidebar-mode-list" role="tablist" aria-label="LLM modes">
+      <button type="button" class="llm-sidebar-mode is-active" data-llm-mode="ask">Ask</button>
+      <button type="button" class="llm-sidebar-mode" data-llm-mode="highlight">Highlight</button>
+      <button type="button" class="llm-sidebar-mode" data-llm-mode="feedback">Feedback</button>
+    </div>
+
+    <div class="llm-sidebar-body">
+      <section class="llm-section is-active" data-llm-section="ask">
+        <label class="llm-label" for="llm-free-query">Ask with retrieved context</label>
+        <textarea
+          id="llm-free-query"
+          class="llm-textarea"
+          rows="6"
+          placeholder="Ask a question about the currently retrieved top results..."
+        ></textarea>
+
+        <div class="llm-inline-row">
+          <label class="llm-small-label" for="llm-top-k">Use top-k</label>
+          <select id="llm-top-k" class="llm-select">
+            <option value="3">Top 3</option>
+            <option value="5" selected>Top 5</option>
+            <option value="10">Top 10</option>
+          </select>
+        </div>
+
+        <button type="button" class="llm-action-button">Run RAG Query</button>
+      </section>
+
+      <section class="llm-section" data-llm-section="highlight">
+        <p class="llm-section-text">
+          Extract the most relevant spans from the current results and highlight them.
+        </p>
+
+        <div class="llm-inline-row">
+          <label class="llm-small-label" for="llm-highlight-k">Use top-k</label>
+          <select id="llm-highlight-k" class="llm-select">
+            <option value="3">Top 3</option>
+            <option value="5" selected>Top 5</option>
+            <option value="10">Top 10</option>
+          </select>
+        </div>
+
+        <button type="button" class="llm-action-button">Extract Highlights</button>
+      </section>
+
+      <section class="llm-section" data-llm-section="feedback">
+        <p class="llm-section-text">
+          Quickly evaluate the current retrieval output.
+        </p>
+
+
+        <textarea
+          class="llm-textarea llm-textarea-small"
+          rows="4"
+          placeholder="Optional note..."
+        ></textarea>
+
+        <button type="button" class="llm-action-button">Save Feedback</button>
+      </section>
+    </div>
+
+    <div class="llm-sidebar-footer">
+      <p class="llm-placeholder-note">
+        UI only for now. Backend hooks can be added later.
+      </p>
+    </div>
+  </div>
+</aside>

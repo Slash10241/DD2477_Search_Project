@@ -1,3 +1,5 @@
+
+
 {% load static %}
 <!doctype html>
 <html lang="en">
@@ -83,9 +85,13 @@
       </form>
     </section>
 
-    <section id="results">
-      {% include "partials/results.html" %}
+
+      <section id="results">
+        {% include "partials/results.html" %}
+      </section>
     </section>
+
+    {% include "partials/llm_sidebar.html" %}
   </main>
   <script src="{% static 'js/app.js' %}"></script>
 </body>
