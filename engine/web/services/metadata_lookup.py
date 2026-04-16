@@ -4,7 +4,7 @@ import os
 from pathlib import Path
 from threading import Lock
 from typing import TypedDict, Sequence
-from .elastic_utils import SearchResult, SearchResultPossiblyWithMetadata, SearchResultWithOptionalMetadata
+from .elastic_utils import SearchResult, SearchResultPossiblyWithMetadata
 
 load_dotenv()
 class ShowMetadata(TypedDict):
@@ -80,7 +80,7 @@ def enrich_results_with_metadata(results: Sequence[SearchResult]) -> Sequence[Se
         episode_name = show_metadata["episodes"].get(episode_prefix, "")
 
         if show_metadata["show_name"]:
-            enriched_res: SearchResultWithOptionalMetadata = {
+            enriched_res: SearchResultPossiblyWithMetadata = {
                 "score": res["score"],
                 "source": res["source"],
                 "show_name": show_metadata["show_name"]

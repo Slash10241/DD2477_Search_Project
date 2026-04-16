@@ -1,4 +1,46 @@
 console.log("app.js loaded");
+
+function getCookie(name) {
+	let cookieValue = null;
+	if (document.cookie && document.cookie !== "") {
+		const cookies = document.cookie.split(";");
+		for (const cookie of cookies) {
+			const trimmed = cookie.trim();
+			if (trimmed.startsWith(`${name}=`)) {
+				cookieValue = decodeURIComponent(trimmed.substring(name.length + 1));
+				break;
+			}
+		}
+	}
+	return cookieValue;
+}
+
+function escapeHtml(value) {
+	return String(value)
+		.replaceAll("&", "&amp;")
+		.replaceAll("<", "&lt;")
+		.replaceAll(">", "&gt;")
+		.replaceAll('"', "&quot;")
+		.replaceAll("'", "&#39;");
+}
+
+function renderHighlightedResults(results) {
+	const cards = document.querySelectorAll(".result-card");
+
+	results.forEach((result, index) => {
+		const card = cards[index];
+		if (!card) return;
+
+		const snippet = card.querySelector("[data-result-snippet]");
+		if (!snippet) return;
+
+		const highlightedText = result.source?.highlighted_text;
+		if (typeof highlightedText === "string" && highlightedText.length > 0) {
+			snippet.innerHTML = highlightedText;
+		}
+	});
+}
+
 document.addEventListener("DOMContentLoaded", () => {
 	const picker = document.querySelector("[data-mode-picker]");
 	const sidebar = document.querySelector("[data-llm-sidebar]");
@@ -156,12 +198,103 @@ document.addEventListener("DOMContentLoaded", () => {
 			});
 		});
 	}
+
+	document.addEventListener("click", async (event) => {
+		const highlightButton = event.target instanceof Element
+			? event.target.closest("[data-llm-highlight-button]")
+			: null;
+
+		if (!highlightButton) {
+			return;
+		}
+
+		const queryInput = document.querySelector("input[name='q']");
+		const modeInput = document.querySelector("#mode-input");
+		const topKSelect = document.querySelector("#llm-highlight-k");
+
+		const q = queryInput instanceof HTMLInputElement ? queryInput.value.trim() : "";
+		const mode = modeInput instanceof HTMLInputElement ? modeInput.value : "lexical";
+		const topK = topKSelect instanceof HTMLSelectElement ? Number(topKSelect.value) : 5;
+
+		if (!q) {
+			window.alert("Please enter a search query first.");
+			return;
+		}
+
+		highlightButton.setAttribute("disabled", "true");
+		const originalText = highlightButton.textContent;
+		highlightButton.textContent = "Extracting...";
+
+		try {
+			const response = await fetch("/llm/highlight", {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+					"X-CSRFToken": getCookie("csrftoken") || "",
+				},
+				body: JSON.stringify({
+					q,
+					mode,
+					top_k: topK,
+				}),
+			});
+
+			const data = await response.json();
+
+			if (!response.ok) {
+				throw new Error(data.error || "Highlight extraction failed.");
+			}
+
+			renderHighlightedResults(data.results || []);
+		} catch (error) {
+			console.error(error);
+			window.alert(error instanceof Error ? error.message : "Highlight extraction failed.");
+		} finally {
+			highlightButton.removeAttribute("disabled");
+			highlightButton.textContent = originalText || "Extract Highlights";
+		}
+	});
 });
 
-document.addEventListener("click", (event) => {
-	const btn = event.target.closest("[data-summary-llm]");
-	if (!btn) return;
+// document.addEventListener("click", (event) => {
+// 	const btn = event.target instanceof Element ? event.target.closest("[data-summary-llm]") : null;
+// 	if (!btn) return;
 
-	console.log("Generate summary with top-k...");
-	// later: call backend here
+// 	console.log("Generate summary with top-k...");
+// 	// later: call backend here
+// });
+
+document.addEventListener("click", async (event) => {
+  const btn = event.target.closest("[data-summary-llm]");
+  if (!btn) return;
+
+  console.log("Summarize clicked");
+
+  const q = new URLSearchParams(window.location.search).get("q");
+  const mode = new URLSearchParams(window.location.search).get("mode") || "lexical";
+
+  try {
+    const res = await fetch("/llm/summarize", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": getCookie("csrftoken") || "",
+      },
+      body: JSON.stringify({ q, mode, top_k: 8 }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error || "Summary failed");
+    }
+
+    if (data.summary) {
+      document.querySelector(".results-summary-text").textContent = data.summary;
+    }
+
+  } catch (err) {
+    console.error(err);
+    alert(err.message);
+  }
 });
