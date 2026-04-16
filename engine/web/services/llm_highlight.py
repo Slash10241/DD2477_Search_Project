@@ -39,7 +39,7 @@ def _get_api_key() -> str:
 
 
 def _get_model_name() -> str:
-    return getattr(settings, "GEMINI_HIGHLIGHT_MODEL", DEFAULT_MODEL) or DEFAULT_MODEL
+    return getattr(settings, "GEMINI_MODEL", DEFAULT_MODEL) or DEFAULT_MODEL
 
 
 def _get_client() -> genai.Client:

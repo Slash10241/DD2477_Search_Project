@@ -131,7 +131,7 @@ STATIC_URL = 'static/'
 # Gemini configuration
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
 
-GEMINI_HIGHLIGHT_MODEL = os.environ.get(
-    "GEMINI_HIGHLIGHT_MODEL",
+GEMINI_MODEL = os.environ.get(
+    "GEMINI_MODEL",
     "gemini-2.5-flash-lite",
 )

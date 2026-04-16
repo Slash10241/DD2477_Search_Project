@@ -34,7 +34,7 @@ def generate_summary(query: str, results: list) -> str:
     """
 
     response = client.models.generate_content(
-        model=settings.GEMINI_HIGHLIGHT_MODEL,
+        model=settings.GEMINI_MODEL,
         contents=prompt,
     )
 
