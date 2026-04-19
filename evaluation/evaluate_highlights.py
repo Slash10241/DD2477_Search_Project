@@ -1,33 +1,30 @@
 """
-Evaluate LLM-generated text highlighting against manual highlight annotations.
+Evaluate LLM-generated text highlighting with manual quality ratings (0-3).
 
-This script evaluates whether the LLM highlights IMPORTANT transcript parts.
-It compares predicted highlight quotes against manually annotated gold phrases.
+New evaluation flow:
+1) Run LLM highlighting over ranked transcript chunks.
+2) Manually rate each generated highlight quality from 0 to 3.
+3) Compute highlight-quality metrics.
 
-Core definitions per result:
-  - gold positive      := at least one gold highlight phrase exists
-  - predicted positive := the LLM returned at least one quote
-  - matched            := at least one predicted quote matches a gold phrase
-
-Metrics mirror the retrieval evaluator shape:
-  - Highlight Precision@K / Recall@K / F1@K for K in {10, 20, 30, 40, 50}
-  - Per-query precision-recall curve at rank 1..N
-  - Macro-averaged curves and per-query plots
+Annotation scale per result:
+  0 = bad (irrelevant / misleading / no useful highlight)
+  1 = weak (partially relevant, low usefulness)
+  2 = good (mostly relevant and useful)
+  3 = excellent (highly relevant, captures key evidence)
 
 Required inputs:
-  - query_results.txt            (output from getRankings.py)
-  - annotated_highlights.txt     (manual highlight annotations)
+  - query_results.txt
+  - annotated_highlight_quality.txt
 
-LLM predictions are cached in results/highlight_predictions.json to avoid
-re-calling the model on every run.
+Predictions are cached in results/highlight_predictions.json.
 """
 
 from __future__ import annotations
 
 import argparse
 import csv
-import difflib
 import json
+import math
 import os
 import re
 from pathlib import Path
@@ -41,10 +38,11 @@ from evaluate_metrics import K_VALUES
 
 
 QUERY_RESULTS_FILE = "query_results.txt"
-HIGHLIGHT_ANNOTATED_FILE = "annotated_highlights.txt"
+QUALITY_ANNOTATED_FILE = "annotated_highlight_quality.txt"
 RESULTS_DIR = "results"
 
 PREDICTIONS_FILE = f"{RESULTS_DIR}/highlight_predictions.json"
+ANNOTATION_INPUT_FILE = f"{RESULTS_DIR}/highlight_annotation_input.txt"
 PER_QUERY_PLOT_DIR = f"{RESULTS_DIR}/highlight_pr_curves_per_query"
 AVG_PLOT_PATH = f"{RESULTS_DIR}/highlight_pr_curve.png"
 PER_QUERY_METRICS_PATH = f"{RESULTS_DIR}/highlight_metrics_per_query.csv"
@@ -53,33 +51,10 @@ PR_CURVE_PATH = f"{RESULTS_DIR}/highlight_pr_curve_per_query.csv"
 
 DEFAULT_MODEL = "gemini-2.5-flash-lite"
 DEFAULT_BATCH_SIZE = 5
-MATCH_THRESHOLD = 0.82
-NO_HIGHLIGHTS_TOKEN = "NONE"
+QUALITY_POSITIVE_THRESHOLD = 2
 
 
 def parse_query_results(filepath: str) -> dict[str, list[dict[str, Any]]]:
-    """
-    Parse query_results.txt from getRankings.py.
-
-    Expected pattern per query:
-      <query line>
-      <num_found>
-      [1]
-      Podcast : ...
-      Episode : ...
-      Content : ...
-      Time    : ...
-      ...
-
-    Returns:
-      {
-        query: [
-          {"rank": int, "show": str, "episode": str, "text": str, "time": str},
-          ...
-        ],
-        ...
-      }
-    """
     lines = Path(filepath).read_text(encoding="utf-8").splitlines()
     data: dict[str, list[dict[str, Any]]] = {}
 
@@ -90,9 +65,7 @@ def parse_query_results(filepath: str) -> dict[str, list[dict[str, Any]]]:
             i += 1
             continue
 
-        if i + 1 >= len(lines):
-            break
-        if not re.fullmatch(r"\d+", lines[i + 1].strip()):
+        if i + 1 >= len(lines) or not re.fullmatch(r"\d+", lines[i + 1].strip()):
             i += 1
             continue
 
@@ -101,7 +74,6 @@ def parse_query_results(filepath: str) -> dict[str, list[dict[str, Any]]]:
 
         while i < len(lines):
             line = lines[i].strip()
-
             if not line:
                 i += 1
                 continue
@@ -155,44 +127,30 @@ def parse_query_results(filepath: str) -> dict[str, list[dict[str, Any]]]:
     return data
 
 
-def parse_annotated_highlights(
+def parse_annotated_highlight_quality(
     filepath: str, known_queries: set[str]
 ) -> dict[str, list[dict[str, Any]]]:
     """
-    Parse annotated_highlights.txt.
-
-    Format (mirrors annotated_results.txt style):
+    Format:
       <query>
       <show>
       <episode>
-      <highlight_1 || highlight_2 || ... || highlight_n>
+      <quality_score 0-3>
       <blank line>
-
-    Use "NONE" when no phrase in the chunk should be highlighted.
-
-    Returns:
-      {
-        query: [
-          {"show": str, "episode": str, "gold_highlights": list[str]},
-          ...
-        ]
-      }
     """
     data: dict[str, list[dict[str, Any]]] = {}
     current_query: str | None = None
     current_results: list[dict[str, Any]] = []
 
     lines = Path(filepath).read_text(encoding="utf-8").splitlines()
-
     i = 0
+
     while i < len(lines):
         line = lines[i].strip()
-
         if not line:
             i += 1
             continue
 
-        # Query boundaries are detected from known query strings.
         if line in known_queries and current_query != line:
             if current_query is not None and current_results:
                 data[current_query] = current_results
@@ -212,24 +170,16 @@ def parse_annotated_highlights(
             i += 1
             while i < len(lines) and not lines[i].strip():
                 i += 1
-            highlights_line = lines[i].strip() if i < len(lines) else ""
+            score_line = lines[i].strip() if i < len(lines) else ""
 
-            if show and episode and highlights_line:
-                if highlights_line.upper() == NO_HIGHLIGHTS_TOKEN:
-                    gold_highlights: list[str] = []
-                else:
-                    gold_highlights = [
-                        p.strip() for p in highlights_line.split("||") if p.strip()
-                    ]
-
+            if show and episode and re.fullmatch(r"[0-3]", score_line):
                 current_results.append(
                     {
                         "show": show,
                         "episode": episode,
-                        "gold_highlights": gold_highlights,
+                        "quality": int(score_line),
                     }
                 )
-
                 i += 1
                 continue
 
@@ -327,7 +277,6 @@ def generate_predictions(
     batch_size: int,
     max_queries: int | None,
 ) -> dict[str, list[dict[str, Any]]]:
-    """Return {query: [{rank, show, episode, quotes, predicted_positive}, ...]}"""
     client = genai.Client(api_key=_api_key())
     predictions: dict[str, list[dict[str, Any]]] = {}
 
@@ -350,6 +299,7 @@ def generate_predictions(
                         "rank": item["rank"],
                         "show": item["show"],
                         "episode": item["episode"],
+                        "text": item["text"],
                         "quotes": quotes,
                         "predicted_positive": bool(quotes),
                     }
@@ -360,60 +310,60 @@ def generate_predictions(
     return predictions
 
 
-def _norm(text: str) -> str:
-    text = text.lower().strip()
-    text = re.sub(r"\s+", " ", text)
-    return text
+def export_annotation_input(
+    query_results: dict[str, list[dict[str, Any]]],
+    predictions: dict[str, list[dict[str, Any]]],
+    output_path: str = ANNOTATION_INPUT_FILE,
+) -> None:
+    """Export a human-friendly file used to rate highlight quality 0-3."""
+    with open(output_path, "w", encoding="utf-8") as fh:
+        for query, results in query_results.items():
+            pred_rows = predictions.get(query, [])
+            n = min(len(results), len(pred_rows))
+            for i in range(n):
+                row = pred_rows[i]
+                quotes = row.get("quotes", [])
+                quote_str = " || ".join(quotes) if quotes else "NONE"
+
+                fh.write(f"Query: {query}\n")
+                fh.write(f"Show: {row.get('show', '')}\n")
+                fh.write(f"Episode: {row.get('episode', '')}\n")
+                fh.write(f"Predicted highlights: {quote_str}\n")
+                fh.write("Transcript:\n")
+                fh.write(f"{row.get('text', '')}\n")
+                fh.write("-" * 80 + "\n\n")
 
 
-def _phrase_match(a: str, b: str) -> bool:
-    a_n = _norm(a)
-    b_n = _norm(b)
-    if not a_n or not b_n:
-        return False
-
-    # Strong exact/substring signals first.
-    if a_n == b_n:
-        return True
-    if a_n in b_n or b_n in a_n:
-        return True
-
-    return difflib.SequenceMatcher(None, a_n, b_n).ratio() >= MATCH_THRESHOLD
+def is_high_quality(score: int) -> bool:
+    return score >= QUALITY_POSITIVE_THRESHOLD
 
 
-def _has_match(pred_quotes: list[str], gold_quotes: list[str]) -> bool:
-    if not pred_quotes or not gold_quotes:
-        return False
-
-    for p in pred_quotes:
-        for g in gold_quotes:
-            if _phrase_match(p, g):
-                return True
-    return False
-
-
-def precision_at_k_binary(pred_hit: list[bool], pred_pos: list[bool], k: int) -> float:
-    k = min(k, len(pred_hit), len(pred_pos))
+def precision_at_k(pred_pos: list[bool], quality_scores: list[int], k: int) -> float:
+    k = min(k, len(pred_pos), len(quality_scores))
     if k <= 0:
         return 0.0
 
-    tp = sum(1 for h in pred_hit[:k] if h)
+    tp = sum(
+        1 for p, s in zip(pred_pos[:k], quality_scores[:k]) if p and is_high_quality(s)
+    )
     pp = sum(1 for p in pred_pos[:k] if p)
     if pp == 0:
         return 0.0
     return tp / pp
 
 
-def recall_at_k_binary(pred_hit: list[bool], gold_pos: list[bool], k: int) -> float:
-    k = min(k, len(pred_hit), len(gold_pos))
+def recall_at_k(pred_pos: list[bool], quality_scores: list[int], k: int) -> float:
+    k = min(k, len(pred_pos), len(quality_scores))
     if k <= 0:
         return 0.0
 
-    tp = sum(1 for h in pred_hit[:k] if h)
-    total_pos = sum(1 for g in gold_pos if g)
-    if total_pos == 0:
+    tp = sum(
+        1 for p, s in zip(pred_pos[:k], quality_scores[:k]) if p and is_high_quality(s)
+    )
+    total_high_quality = sum(1 for s in quality_scores if is_high_quality(s))
+    if total_high_quality == 0:
         return 0.0
-    return tp / total_pos
+    return tp / total_high_quality
 
 
 def f1_score(p: float, r: float) -> float:
@@ -422,14 +372,39 @@ def f1_score(p: float, r: float) -> float:
     return 2 * p * r / (p + r)
 
 
+def avg_quality_at_k(scores: list[int], k: int) -> float:
+    top_k = scores[:k]
+    if not top_k:
+        return 0.0
+    return float(sum(top_k) / len(top_k))
+
+
+def dcg_at_k(scores: list[int], k: int) -> float:
+    total = 0.0
+    for i, s in enumerate(scores[:k], start=1):
+        total += s / math.log2(i + 1)
+    return total
+
+
+def ndcg_at_k(scores: list[int], k: int) -> float:
+    idcg = dcg_at_k(sorted(scores, reverse=True), k)
+    if idcg == 0:
+        return 0.0
+    return dcg_at_k(scores, k) / idcg
+
+
 def compute_highlight_metrics(
     annotations: dict[str, list[dict[str, Any]]],
     predictions: dict[str, list[dict[str, Any]]],
 ) -> dict[str, Any]:
     per_query: dict[str, Any] = {}
+
     avg_p = {k: [] for k in K_VALUES}
     avg_r = {k: [] for k in K_VALUES}
     avg_f1 = {k: [] for k in K_VALUES}
+    avg_q = {k: [] for k in K_VALUES}
+    avg_dcg = {k: [] for k in K_VALUES}
+    avg_ndcg = {k: [] for k in K_VALUES}
 
     p_curves: list[list[float]] = []
     r_curves: list[list[float]] = []
@@ -448,26 +423,23 @@ def compute_highlight_metrics(
         if n == 0:
             continue
 
-        gold_pos: list[bool] = []
-        pred_pos: list[bool] = []
-        pred_hit: list[bool] = []
+        pred_pos = [bool(r.get("predicted_positive", False)) for r in pred_rows[:n]]
+        quality_scores = [int(r.get("quality", 0)) for r in ann[:n]]
 
-        for i in range(n):
-            gold_quotes = ann[i].get("gold_highlights", [])
-            pred_quotes = pred_rows[i].get("quotes", [])
-
-            gold_pos.append(bool(gold_quotes))
-            pred_pos.append(bool(pred_quotes))
-            pred_hit.append(_has_match(pred_quotes, gold_quotes))
-
-        p_at_k = {k: precision_at_k_binary(pred_hit, pred_pos, k) for k in K_VALUES}
-        r_at_k = {k: recall_at_k_binary(pred_hit, gold_pos, k) for k in K_VALUES}
+        p_at_k = {k: precision_at_k(pred_pos, quality_scores, k) for k in K_VALUES}
+        r_at_k = {k: recall_at_k(pred_pos, quality_scores, k) for k in K_VALUES}
         f1_at_k = {k: f1_score(p_at_k[k], r_at_k[k]) for k in K_VALUES}
+        q_at_k = {k: avg_quality_at_k(quality_scores, k) for k in K_VALUES}
+        d_at_k = {k: dcg_at_k(quality_scores, k) for k in K_VALUES}
+        n_at_k = {k: ndcg_at_k(quality_scores, k) for k in K_VALUES}
 
         per_query[query] = {
             "precision": p_at_k,
             "recall": r_at_k,
             "f1": f1_at_k,
+            "avg_quality": q_at_k,
+            "DCG": d_at_k,
+            "nDCG": n_at_k,
             "n_evaluated": n,
         }
 
@@ -475,12 +447,15 @@ def compute_highlight_metrics(
             avg_p[k].append(p_at_k[k])
             avg_r[k].append(r_at_k[k])
             avg_f1[k].append(f1_at_k[k])
+            avg_q[k].append(q_at_k[k])
+            avg_dcg[k].append(d_at_k[k])
+            avg_ndcg[k].append(n_at_k[k])
 
         p_curve: list[float] = []
         r_curve: list[float] = []
         for k in range(1, n + 1):
-            p_curve.append(precision_at_k_binary(pred_hit, pred_pos, k))
-            r_curve.append(recall_at_k_binary(pred_hit, gold_pos, k))
+            p_curve.append(precision_at_k(pred_pos, quality_scores, k))
+            r_curve.append(recall_at_k(pred_pos, quality_scores, k))
         p_curves.append(p_curve)
         r_curves.append(r_curve)
 
@@ -489,6 +464,9 @@ def compute_highlight_metrics(
             "precision": float(np.mean(avg_p[k])) if avg_p[k] else 0.0,
             "recall": float(np.mean(avg_r[k])) if avg_r[k] else 0.0,
             "f1": float(np.mean(avg_f1[k])) if avg_f1[k] else 0.0,
+            "avg_quality": float(np.mean(avg_q[k])) if avg_q[k] else 0.0,
+            "DCG": float(np.mean(avg_dcg[k])) if avg_dcg[k] else 0.0,
+            "nDCG": float(np.mean(avg_ndcg[k])) if avg_ndcg[k] else 0.0,
         }
         for k in K_VALUES
     }
@@ -525,19 +503,26 @@ def save_metrics_per_query(
                 "highlight_precision",
                 "highlight_recall",
                 "highlight_f1",
+                "avg_quality",
+                "DCG",
+                "nDCG",
                 "n_evaluated",
             ]
         )
         for query in results["queries"]:
             n_eval = results["per_query"][query]["n_evaluated"]
             for k in K_VALUES:
+                q = results["per_query"][query]
                 writer.writerow(
                     [
                         query,
                         k,
-                        round(results["per_query"][query]["precision"][k], 6),
-                        round(results["per_query"][query]["recall"][k], 6),
-                        round(results["per_query"][query]["f1"][k], 6),
+                        round(q["precision"][k], 6),
+                        round(q["recall"][k], 6),
+                        round(q["f1"][k], 6),
+                        round(q["avg_quality"][k], 6),
+                        round(q["DCG"][k], 6),
+                        round(q["nDCG"][k], 6),
                         n_eval,
                     ]
                 )
@@ -549,15 +534,27 @@ def save_metrics_averaged(
     with open(output_path, "w", newline="", encoding="utf-8") as fh:
         writer = csv.writer(fh)
         writer.writerow(
-            ["K", "avg_highlight_precision", "avg_highlight_recall", "avg_highlight_f1"]
+            [
+                "K",
+                "avg_highlight_precision",
+                "avg_highlight_recall",
+                "avg_highlight_f1",
+                "avg_quality",
+                "avg_DCG",
+                "avg_nDCG",
+            ]
         )
         for k in K_VALUES:
+            q = results["averaged"][k]
             writer.writerow(
                 [
                     k,
-                    round(results["averaged"][k]["precision"], 6),
-                    round(results["averaged"][k]["recall"], 6),
-                    round(results["averaged"][k]["f1"], 6),
+                    round(q["precision"], 6),
+                    round(q["recall"], 6),
+                    round(q["f1"], 6),
+                    round(q["avg_quality"], 6),
+                    round(q["DCG"], 6),
+                    round(q["nDCG"], 6),
                 ]
             )
 
@@ -595,7 +592,7 @@ def plot_avg_precision_recall(
         mean_precision,
         color="#16A34A",
         linewidth=2.5,
-        label="Mean highlight P-R curve",
+        label="Mean highlight P-R curve (quality>=2)",
     )
     ax.fill_between(recall_grid, mean_precision, alpha=0.12, color="#16A34A")
 
@@ -634,9 +631,7 @@ def plot_per_query_precision_recall(
         start=1,
     ):
         fig, ax = plt.subplots(figsize=(7, 4.5))
-        ax.plot(
-            r_curve, p_curve, color="#16A34A", linewidth=2, label="Highlight P-R curve"
-        )
+        ax.plot(r_curve, p_curve, color="#16A34A", linewidth=2, label="P-R curve")
         ax.fill_between(r_curve, p_curve, alpha=0.10, color="#16A34A")
 
         query_metrics = results["per_query"][query]
@@ -668,19 +663,20 @@ def plot_per_query_precision_recall(
 
 
 def print_summary(results: dict[str, Any]) -> None:
-    print("\n" + "=" * 72)
-    print("  LLM HIGHLIGHT EVALUATION SUMMARY")
-    print("  Positive prediction = result has >=1 LLM quote")
-    print("  Positive gold label = result has >=1 annotated highlight phrase")
-    print("  TP = predicted quote matches at least one gold phrase")
-    print("=" * 72)
-    print(f"\n{'K':>6} {'H-Precision':>14} {'H-Recall':>12} {'H-F1':>10}")
-    print("-" * 50)
+    print("\n" + "=" * 78)
+    print("  LLM HIGHLIGHT QUALITY EVALUATION SUMMARY")
+    print("  Quality score: 0-3 (higher is better)")
+    print(f"  High quality threshold for P/R: >= {QUALITY_POSITIVE_THRESHOLD}")
+    print("=" * 78)
+    print(
+        f"\n{'K':>6} {'H-Precision':>14} {'H-Recall':>12} {'H-F1':>10} {'AvgQ':>10} {'nDCG':>10}"
+    )
+    print("-" * 74)
     for k in K_VALUES:
-        p = results["averaged"][k]["precision"]
-        r = results["averaged"][k]["recall"]
-        f = results["averaged"][k]["f1"]
-        print(f"{k:>6} {p:>14.4f} {r:>12.4f} {f:>10.4f}")
+        q = results["averaged"][k]
+        print(
+            f"{k:>6} {q['precision']:>14.4f} {q['recall']:>12.4f} {q['f1']:>10.4f} {q['avg_quality']:>10.4f} {q['nDCG']:>10.4f}"
+        )
 
 
 def _ensure_results_dir() -> None:
@@ -689,23 +685,24 @@ def _ensure_results_dir() -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Evaluate LLM-generated text highlighting quality."
+        description="Evaluate LLM-generated text highlighting with quality ratings (0-3)."
     )
     parser.add_argument("--query-results", default=QUERY_RESULTS_FILE)
-    parser.add_argument("--annotations", default=HIGHLIGHT_ANNOTATED_FILE)
+    parser.add_argument("--annotations", default=QUALITY_ANNOTATED_FILE)
     parser.add_argument("--predictions", default=PREDICTIONS_FILE)
+    parser.add_argument("--annotation-input", default=ANNOTATION_INPUT_FILE)
     parser.add_argument("--model", default=DEFAULT_MODEL)
     parser.add_argument("--batch-size", type=int, default=DEFAULT_BATCH_SIZE)
     parser.add_argument(
         "--max-queries",
         type=int,
         default=None,
-        help="Only process first N queries when generating predictions (debug/cost control).",
+        help="Only process first N queries when generating predictions.",
     )
     parser.add_argument(
         "--reuse-predictions",
         action="store_true",
-        help="Reuse cached predictions file if it exists (recommended).",
+        help="Reuse cached predictions file if it exists.",
     )
     args = parser.parse_args()
 
@@ -714,12 +711,6 @@ def main() -> None:
     print(f"Parsing query results from '{args.query_results}' ...")
     query_results = parse_query_results(args.query_results)
     print(f"  Loaded {len(query_results)} queries")
-
-    print(f"Parsing highlight annotations from '{args.annotations}' ...")
-    annotations = parse_annotated_highlights(
-        args.annotations, known_queries=set(query_results.keys())
-    )
-    print(f"  Loaded {len(annotations)} queries")
 
     predictions_path = Path(args.predictions)
     if args.reuse_predictions and predictions_path.exists():
@@ -737,6 +728,19 @@ def main() -> None:
             json.dumps(predictions, ensure_ascii=False, indent=2), encoding="utf-8"
         )
         print(f"  Saved predictions to '{args.predictions}'")
+
+    export_annotation_input(
+        query_results=query_results,
+        predictions=predictions,
+        output_path=args.annotation_input,
+    )
+    print(f"  Exported annotation input to '{args.annotation_input}'")
+
+    print(f"Parsing quality annotations from '{args.annotations}' ...")
+    annotations = parse_annotated_highlight_quality(
+        args.annotations, known_queries=set(query_results.keys())
+    )
+    print(f"  Loaded {len(annotations)} queries")
 
     print("Computing highlight metrics ...")
     results = compute_highlight_metrics(annotations, predictions)

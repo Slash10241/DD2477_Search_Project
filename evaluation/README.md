@@ -100,21 +100,24 @@ Use the files and steps below for highlight-quality evaluation only.
 Input files:
 
 - query_results.txt
-- annotated_highlights.txt
+- annotated_highlight_quality.txt
 
-Gold annotation format (annotated_highlights.txt):
+Gold annotation format (annotated_highlight_quality.txt):
 <query>
 <Show name>
 <episode name>
-<highlight_1 || highlight_2 || ... || highlight_n>
+<quality_score 0-3>
 <\n>
 
 Rules:
 
 - Query line must exactly match query text in query_results.txt
 - Keep same result order as query_results.txt
-- Copy highlight phrases exactly from transcript text (no paraphrase)
-- Write NONE if no important phrase should be highlighted for that result
+- Score meaning:
+  - 0: bad highlight quality
+  - 1: weak highlight quality
+  - 2: good highlight quality
+  - 3: excellent highlight quality
 
 Prompt for annotation:
 
@@ -123,12 +126,19 @@ Prompt for annotation:
 Run highlight evaluation:
 uv run evaluate_highlights.py
 
+The script also exports an annotation helper file:
+
+- results/highlight_annotation_input.txt
+
+Use that file as the source when producing annotated_highlight_quality.txt.
+
 Reuse cached predictions (no new LLM calls):
 uv run evaluate_highlights.py --reuse-predictions
 
 Highlight outputs in results folder:
 
 - highlight_predictions.json
+- highlight_annotation_input.txt
 - highlight_metrics_per_query.csv
 - highlight_metrics_averaged.csv
 - highlight_pr_curve_per_query.csv

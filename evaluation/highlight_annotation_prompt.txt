@@ -1,27 +1,33 @@
 You are a data annotation engineer.
 
 Task:
-For each query and each retrieved transcript chunk, annotate the MOST IMPORTANT parts of the chunk with respect to the query.
+For each query-result pair, rate the quality of the GENERATED highlight from 0 to 3.
+You must judge whether the highlighted text captures the important parts of the transcript for the query.
+
+Scoring rubric:
+0 = bad: irrelevant/misleading highlight, or no useful highlight for the query
+1 = weak: partially relevant but misses key information, low usefulness
+2 = good: mostly relevant and useful, captures important parts with minor issues
+3 = excellent: highly relevant, precise, and captures the key evidence clearly
+
+Input you will receive per item:
+- Query
+- Show
+- Episode
+- Predicted highlights (LLM output)
+- Transcript chunk
 
 Output format (strict):
 <query>
 <show name>
 <episode name>
-<highlight_1 || highlight_2 || ... || highlight_n>
-<\n>
+<quality_score 0-3>
+<blank line>
 
 Rules:
-1. Copy highlights EXACTLY from the chunk text (no paraphrasing).
-2. Each highlight should be a short phrase (roughly 5-15 words).
-3. Add 1-3 highlights when the chunk contains useful evidence for the query.
-4. If the chunk has no important part for the query, write exactly: NONE
-5. Keep the same result order as in query_results.txt.
-6. Do not add extra fields, numbering, or commentary.
+1. Keep exact query/show/episode text.
+2. Output only score 0, 1, 2, or 3.
+3. Keep same item order as the provided annotation input.
+4. No extra commentary, explanation, numbering, or fields.
 
-Quality examples:
-- Good: "millions of people under lockdown"
-- Good: "declaring a public health emergency"
-- Bad: paraphrased text not present in chunk
-- Bad: full sentence blocks that are too long
-
-Create a single file named: annotated_highlights.txt
+Create a single file named: annotated_highlight_quality.txt
