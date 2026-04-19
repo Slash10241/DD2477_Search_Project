@@ -1,0 +1,301 @@
+query,K,precision,recall,DCG,nDCG
+COVID-19 pandemic response and lockdown measures,10,1.0,0.30303,10.087119,1.0
+COVID-19 pandemic response and lockdown measures,20,0.95,0.575758,14.801594,0.981503
+COVID-19 pandemic response and lockdown measures,30,0.766667,0.69697,17.556379,0.908567
+COVID-19 pandemic response and lockdown measures,40,0.75,0.909091,20.833671,0.953599
+COVID-19 pandemic response and lockdown measures,50,0.66,1.0,23.181164,0.987364
+2020 US presidential election and voter turnout,10,1.0,0.217391,13.630678,1.0
+2020 US presidential election and voter turnout,20,1.0,0.434783,20.128096,0.952999
+2020 US presidential election and voter turnout,30,0.966667,0.630435,25.232552,0.918057
+2020 US presidential election and voter turnout,40,0.95,0.826087,29.671777,0.94666
+2020 US presidential election and voter turnout,50,0.92,1.0,33.830701,0.987861
+Black Lives Matter protests and racial justice,10,1.0,0.243902,12.324643,0.904184
+Black Lives Matter protests and racial justice,20,1.0,0.487805,18.337425,0.868216
+Black Lives Matter protests and racial justice,30,0.966667,0.707317,23.201619,0.90675
+Black Lives Matter protests and racial justice,40,0.85,0.829268,26.873907,0.912633
+Black Lives Matter protests and racial justice,50,0.82,1.0,30.487788,0.969753
+Brexit negotiations and the UK leaving the EU,10,1.0,0.2,11.866847,0.870598
+Brexit negotiations and the UK leaving the EU,20,1.0,0.4,17.586293,0.841726
+Brexit negotiations and the UK leaving the EU,30,1.0,0.6,23.108331,0.919341
+Brexit negotiations and the UK leaving the EU,40,1.0,0.8,27.548688,0.95013
+Brexit negotiations and the UK leaving the EU,50,1.0,1.0,31.52742,0.96686
+Trump impeachment trial and Senate acquittal,10,1.0,0.208333,13.243825,0.971619
+Trump impeachment trial and Senate acquittal,20,1.0,0.416667,19.284794,0.913071
+Trump impeachment trial and Senate acquittal,30,1.0,0.625,24.161305,0.920705
+Trump impeachment trial and Senate acquittal,40,0.95,0.791667,28.413238,0.943927
+Trump impeachment trial and Senate acquittal,50,0.96,1.0,32.746302,0.981574
+wildfires in Australia and California 2020,10,1.0,0.285714,11.574256,0.96167
+wildfires in Australia and California 2020,20,0.75,0.428571,15.353774,0.901625
+wildfires in Australia and California 2020,30,0.7,0.6,18.749095,0.881414
+wildfires in Australia and California 2020,40,0.675,0.771429,22.031419,0.910982
+wildfires in Australia and California 2020,50,0.7,1.0,25.291344,0.973082
+Hong Kong protests and China national security law,10,1.0,0.204082,11.507113,0.844207
+Hong Kong protests and China national security law,20,1.0,0.408163,17.49146,0.899955
+Hong Kong protests and China national security law,30,1.0,0.612245,21.935934,0.926405
+Hong Kong protests and China national security law,40,1.0,0.816327,26.568501,0.964813
+Hong Kong protests and China national security law,50,0.98,1.0,29.999813,0.968531
+refugee crisis and immigration policy debates,10,1.0,0.30303,9.087119,1.0
+refugee crisis and immigration policy debates,20,0.85,0.515152,13.303535,0.944817
+refugee crisis and immigration policy debates,30,0.8,0.727273,16.482028,0.899519
+refugee crisis and immigration policy debates,40,0.725,0.878788,19.376287,0.929434
+refugee crisis and immigration policy debates,50,0.66,1.0,21.90974,0.982471
+rise of populism and nationalist movements in Europe,10,1.0,0.30303,9.402584,0.877266
+rise of populism and nationalist movements in Europe,20,0.85,0.515152,13.9038,0.884946
+rise of populism and nationalist movements in Europe,30,0.733333,0.666667,17.097569,0.856845
+rise of populism and nationalist movements in Europe,40,0.725,0.878788,20.378583,0.906587
+rise of populism and nationalist movements in Europe,50,0.66,1.0,22.722595,0.942504
+United Nations climate summit and global cooperation,10,0.9,0.290323,11.159345,0.876954
+United Nations climate summit and global cooperation,20,0.75,0.483871,15.660218,0.883832
+United Nations climate summit and global cooperation,30,0.666667,0.645161,18.841555,0.857949
+United Nations climate summit and global cooperation,40,0.65,0.83871,21.93169,0.910383
+United Nations climate summit and global cooperation,50,0.62,1.0,24.642383,0.951542
+artificial intelligence and machine learning breakthroughs,10,0.9,0.1875,12.597941,0.924234
+artificial intelligence and machine learning breakthroughs,20,0.95,0.395833,18.84827,0.892403
+artificial intelligence and machine learning breakthroughs,30,0.933333,0.583333,23.944707,0.884251
+artificial intelligence and machine learning breakthroughs,40,0.95,0.791667,28.772052,0.929991
+artificial intelligence and machine learning breakthroughs,50,0.96,1.0,33.289508,0.973436
+mRNA vaccines and the future of medicine,10,0.8,0.258065,9.326542,0.684232
+mRNA vaccines and the future of medicine,20,0.8,0.516129,14.862499,0.764692
+mRNA vaccines and the future of medicine,30,0.7,0.677419,18.680741,0.788931
+mRNA vaccines and the future of medicine,40,0.675,0.870968,22.145263,0.858077
+mRNA vaccines and the future of medicine,50,0.62,1.0,24.318478,0.903896
+climate change policy and the Paris Agreement,10,1.0,0.212766,13.274471,0.973867
+climate change policy and the Paris Agreement,20,1.0,0.425532,19.532849,0.924816
+climate change policy and the Paris Agreement,30,0.966667,0.617021,24.230079,0.894789
+climate change policy and the Paris Agreement,40,0.95,0.808511,29.058086,0.939236
+climate change policy and the Paris Agreement,50,0.94,1.0,33.216026,0.981459
+SpaceX Falcon 9 and commercial space travel,10,1.0,0.232558,13.630678,1.0
+SpaceX Falcon 9 and commercial space travel,20,0.95,0.44186,20.396095,0.965687
+SpaceX Falcon 9 and commercial space travel,30,0.933333,0.651163,25.285084,0.919968
+SpaceX Falcon 9 and commercial space travel,40,0.9,0.837209,29.913602,0.930919
+SpaceX Falcon 9 and commercial space travel,50,0.86,1.0,34.068248,0.987685
+5G technology rollout and conspiracy theories,10,0.8,0.210526,8.415447,0.926085
+5G technology rollout and conspiracy theories,20,0.8,0.421053,12.898544,0.916055
+5G technology rollout and conspiracy theories,30,0.8,0.631579,16.707726,0.911836
+5G technology rollout and conspiracy theories,40,0.75,0.789474,19.796352,0.907777
+5G technology rollout and conspiracy theories,50,0.76,1.0,23.048678,0.976051
+CRISPR gene editing and biotech innovation,10,1.0,0.25,9.087119,0.755021
+CRISPR gene editing and biotech innovation,20,1.0,0.5,14.320349,0.840939
+CRISPR gene editing and biotech innovation,30,0.866667,0.65,18.124549,0.852053
+CRISPR gene editing and biotech innovation,40,0.825,0.825,21.58554,0.858937
+CRISPR gene editing and biotech innovation,50,0.8,1.0,24.833574,0.921905
+quantum computing and its practical applications,10,1.0,0.222222,11.693713,0.857897
+quantum computing and its practical applications,20,1.0,0.444444,16.926943,0.88284
+quantum computing and its practical applications,30,1.0,0.666667,21.371418,0.912688
+quantum computing and its practical applications,40,0.95,0.844444,25.599969,0.938594
+quantum computing and its practical applications,50,0.9,1.0,28.859145,0.96205
+deepfake technology and synthetic media risks,10,0.5,0.208333,6.632285,0.729856
+deepfake technology and synthetic media risks,20,0.5,0.416667,9.590322,0.681105
+deepfake technology and synthetic media risks,30,0.5,0.625,11.928475,0.698364
+deepfake technology and synthetic media risks,40,0.5,0.833333,14.24248,0.772105
+deepfake technology and synthetic media risks,50,0.48,1.0,16.402306,0.889192
+privacy concerns and surveillance capitalism,10,0.7,0.241379,8.126382,0.894275
+privacy concerns and surveillance capitalism,20,0.65,0.448276,12.118382,0.860648
+privacy concerns and surveillance capitalism,30,0.633333,0.655172,15.514741,0.85616
+privacy concerns and surveillance capitalism,40,0.6,0.827586,18.412634,0.918301
+privacy concerns and surveillance capitalism,50,0.58,1.0,20.943874,0.965994
+autonomous self-driving cars and the future of transport,10,1.0,0.232558,10.007113,0.859074
+autonomous self-driving cars and the future of transport,20,0.9,0.418605,14.718986,0.884441
+autonomous self-driving cars and the future of transport,30,0.866667,0.604651,18.522029,0.886868
+autonomous self-driving cars and the future of transport,40,0.875,0.813953,22.191732,0.896865
+autonomous self-driving cars and the future of transport,50,0.86,1.0,25.627721,0.945558
+remote work and the future of the office,10,1.0,0.2,13.630678,1.0
+remote work and the future of the office,20,1.0,0.4,20.354526,0.963719
+remote work and the future of the office,30,1.0,0.6,26.086524,0.949127
+remote work and the future of the office,40,1.0,0.8,30.912267,0.96787
+remote work and the future of the office,50,1.0,1.0,35.247331,0.991435
+stock market crash and economic recession 2020,10,1.0,0.227273,13.026148,0.955649
+stock market crash and economic recession 2020,20,1.0,0.454545,19.554142,0.925824
+stock market crash and economic recession 2020,30,0.933333,0.636364,24.448461,0.889528
+stock market crash and economic recession 2020,40,0.875,0.795455,28.88495,0.915714
+stock market crash and economic recession 2020,50,0.88,1.0,33.392529,0.979674
+gig economy and worker rights,10,1.0,0.25641,12.338266,0.969599
+gig economy and worker rights,20,0.95,0.487179,17.375218,0.980624
+gig economy and worker rights,30,0.9,0.692308,20.986009,0.955596
+gig economy and worker rights,40,0.825,0.846154,23.505615,0.916991
+gig economy and worker rights,50,0.78,1.0,25.850522,0.987177
+startup fundraising and venture capital,10,0.9,0.230769,11.919921,0.874492
+startup fundraising and venture capital,20,0.8,0.410256,17.151707,0.812076
+startup fundraising and venture capital,30,0.766667,0.589744,21.609053,0.83026
+startup fundraising and venture capital,40,0.775,0.794872,25.861812,0.870795
+startup fundraising and venture capital,50,0.78,1.0,29.829833,0.952132
+Amazon and big tech monopoly concerns,10,1.0,0.227273,10.587119,0.831986
+Amazon and big tech monopoly concerns,20,1.0,0.454545,16.321904,0.921177
+Amazon and big tech monopoly concerns,30,0.966667,0.659091,20.780041,0.946218
+Amazon and big tech monopoly concerns,40,0.9,0.818182,24.063907,0.931985
+Amazon and big tech monopoly concerns,50,0.88,1.0,27.311975,0.962986
+personal finance and investing for beginners,10,0.9,0.272727,11.067789,0.811976
+personal finance and investing for beginners,20,0.7,0.424242,15.607183,0.738948
+personal finance and investing for beginners,30,0.7,0.636364,20.264751,0.791973
+personal finance and investing for beginners,40,0.675,0.818182,23.726155,0.843989
+personal finance and investing for beginners,50,0.66,1.0,26.807455,0.917812
+cryptocurrency Bitcoin surge and institutional adoption,10,1.0,0.2,12.271123,0.900258
+cryptocurrency Bitcoin surge and institutional adoption,20,1.0,0.4,17.777191,0.954526
+cryptocurrency Bitcoin surge and institutional adoption,30,1.0,0.6,22.438141,0.981257
+cryptocurrency Bitcoin surge and institutional adoption,40,1.0,0.8,26.297044,0.983964
+cryptocurrency Bitcoin surge and institutional adoption,50,1.0,1.0,29.910444,0.985874
+supply chain disruption and global trade,10,1.0,0.243902,9.420452,0.760218
+supply chain disruption and global trade,20,0.9,0.439024,14.43602,0.830362
+supply chain disruption and global trade,30,0.866667,0.634146,18.46962,0.853975
+supply chain disruption and global trade,40,0.85,0.829268,22.325975,0.875984
+supply chain disruption and global trade,50,0.82,1.0,25.394992,0.924164
+universal basic income and wealth inequality,10,1.0,0.2,13.040583,0.956708
+universal basic income and wealth inequality,20,1.0,0.4,18.802609,0.890241
+universal basic income and wealth inequality,30,1.0,0.6,23.667622,0.93314
+universal basic income and wealth inequality,40,1.0,0.8,28.304626,0.968596
+universal basic income and wealth inequality,50,1.0,1.0,32.282346,0.983147
+women in leadership and the gender pay gap,10,1.0,0.204082,13.630678,1.0
+women in leadership and the gender pay gap,20,1.0,0.408163,20.594609,0.975086
+women in leadership and the gender pay gap,30,1.0,0.612245,25.889051,0.941943
+women in leadership and the gender pay gap,40,1.0,0.816327,30.904346,0.961751
+women in leadership and the gender pay gap,50,0.98,1.0,35.052509,0.990345
+mental health during quarantine and isolation,10,0.9,0.225,9.154261,0.7606
+mental health during quarantine and isolation,20,0.85,0.425,13.900278,0.816271
+mental health during quarantine and isolation,30,0.866667,0.65,17.930157,0.842914
+mental health during quarantine and isolation,40,0.85,0.85,21.60628,0.859762
+mental health during quarantine and isolation,50,0.8,1.0,24.315608,0.920849
+sleep science and improving sleep quality,10,1.0,0.2,12.338266,0.905184
+sleep science and improving sleep quality,20,1.0,0.4,18.815821,0.890867
+sleep science and improving sleep quality,30,1.0,0.6,24.116006,0.904399
+sleep science and improving sleep quality,40,1.0,0.8,28.745029,0.941715
+sleep science and improving sleep quality,50,1.0,1.0,33.261565,0.97434
+mindfulness meditation and stress reduction,10,1.0,0.2,13.630678,1.0
+mindfulness meditation and stress reduction,20,1.0,0.4,20.850567,0.987205
+mindfulness meditation and stress reduction,30,1.0,0.6,26.8004,0.975101
+mindfulness meditation and stress reduction,40,1.0,0.8,32.203245,0.967846
+mindfulness meditation and stress reduction,50,1.0,1.0,37.442302,0.995237
+addiction recovery and substance abuse,10,1.0,0.212766,12.996315,0.953461
+addiction recovery and substance abuse,20,1.0,0.425532,19.463471,0.921531
+addiction recovery and substance abuse,30,1.0,0.638298,24.974262,0.908659
+addiction recovery and substance abuse,40,0.975,0.829787,29.408338,0.938255
+addiction recovery and substance abuse,50,0.94,1.0,33.737286,0.98001
+diet culture and body positivity movement,10,1.0,0.2,12.293997,0.901936
+diet culture and body positivity movement,20,1.0,0.4,19.062933,0.902567
+diet culture and body positivity movement,30,1.0,0.6,24.801891,0.902388
+diet culture and body positivity movement,40,1.0,0.8,29.63362,0.939448
+diet culture and body positivity movement,50,1.0,1.0,34.333101,0.976564
+long COVID symptoms and post-viral fatigue,10,0.5,0.2,7.461373,0.821093
+long COVID symptoms and post-viral fatigue,20,0.55,0.44,10.953463,0.777915
+long COVID symptoms and post-viral fatigue,30,0.5,0.6,13.502844,0.780812
+long COVID symptoms and post-viral fatigue,40,0.55,0.88,16.586164,0.862838
+long COVID symptoms and post-viral fatigue,50,0.5,1.0,18.570852,0.939074
+therapy and the stigma around seeking help,10,1.0,0.208333,12.68085,0.930317
+therapy and the stigma around seeking help,20,0.95,0.395833,18.673435,0.884125
+therapy and the stigma around seeking help,30,0.966667,0.604167,24.203315,0.900647
+therapy and the stigma around seeking help,40,0.975,0.8125,29.026238,0.944491
+therapy and the stigma around seeking help,50,0.96,1.0,33.188407,0.976357
+exercise science and high intensity interval training,10,1.0,0.212766,13.630678,1.0
+exercise science and high intensity interval training,20,1.0,0.425532,21.120805,1.0
+exercise science and high intensity interval training,30,1.0,0.638298,27.484743,1.0
+exercise science and high intensity interval training,40,0.95,0.808511,32.118127,0.965288
+exercise science and high intensity interval training,50,0.94,1.0,37.003556,0.997672
+gut health microbiome and its effect on mood,10,1.0,0.2,13.341613,0.978793
+gut health microbiome and its effect on mood,20,1.0,0.4,19.067018,0.90276
+gut health microbiome and its effect on mood,30,1.0,0.6,24.591002,0.915074
+gut health microbiome and its effect on mood,40,1.0,0.8,29.017716,0.944214
+gut health microbiome and its effect on mood,50,1.0,1.0,33.71693,0.981697
+burnout and chronic workplace stress,10,1.0,0.263158,11.96419,0.87774
+burnout and chronic workplace stress,20,0.8,0.421053,16.742728,0.829401
+burnout and chronic workplace stress,30,0.766667,0.605263,20.775362,0.850433
+burnout and chronic workplace stress,40,0.75,0.789474,24.417153,0.874743
+burnout and chronic workplace stress,50,0.76,1.0,28.385848,0.955103
+true crime investigations and criminal psychology,10,0.9,0.195652,11.104809,0.814692
+true crime investigations and criminal psychology,20,0.85,0.369565,16.299031,0.797942
+true crime investigations and criminal psychology,30,0.9,0.586957,20.754403,0.841316
+true crime investigations and criminal psychology,40,0.925,0.804348,25.583046,0.896774
+true crime investigations and criminal psychology,50,0.92,1.0,29.567229,0.940713
+social media addiction and its effects on teenagers,10,1.0,0.2,12.652073,0.928206
+social media addiction and its effects on teenagers,20,1.0,0.4,18.37377,0.879417
+social media addiction and its effects on teenagers,30,1.0,0.6,23.685594,0.942307
+social media addiction and its effects on teenagers,40,1.0,0.8,27.93161,0.963336
+social media addiction and its effects on teenagers,50,1.0,1.0,31.911502,0.978638
+diversity and inclusion in the workplace,10,1.0,0.208333,13.630678,1.0
+diversity and inclusion in the workplace,20,1.0,0.416667,20.893135,0.989221
+diversity and inclusion in the workplace,30,1.0,0.625,25.992878,0.94572
+diversity and inclusion in the workplace,40,0.975,0.8125,30.999076,0.953267
+diversity and inclusion in the workplace,50,0.96,1.0,35.516566,0.992673
+cancel culture and free speech debate,10,1.0,0.212766,10.051382,0.737409
+cancel culture and free speech debate,20,1.0,0.425532,15.542858,0.822241
+cancel culture and free speech debate,30,1.0,0.638298,20.195125,0.872523
+cancel culture and free speech debate,40,0.975,0.829787,24.439383,0.905009
+cancel culture and free speech debate,50,0.94,1.0,28.055788,0.932508
+parenting advice and raising children,10,0.8,0.222222,11.998269,0.88024
+parenting advice and raising children,20,0.85,0.472222,17.713775,0.867202
+parenting advice and raising children,30,0.766667,0.638889,21.096865,0.855198
+parenting advice and raising children,40,0.75,0.833333,25.143448,0.905301
+parenting advice and raising children,50,0.72,1.0,28.213554,0.959515
+feminism and gender equality in 2020,10,1.0,0.222222,12.37735,0.908051
+feminism and gender equality in 2020,20,0.95,0.422222,19.125778,0.905542
+feminism and gender equality in 2020,30,0.966667,0.644444,24.637504,0.946619
+feminism and gender equality in 2020,40,0.9,0.8,28.308213,0.947215
+feminism and gender equality in 2020,50,0.9,1.0,31.741582,0.973415
+religion spirituality and finding meaning in life,10,0.9,0.204545,10.419109,0.764387
+religion spirituality and finding meaning in life,20,0.9,0.409091,16.112075,0.828984
+religion spirituality and finding meaning in life,30,0.933333,0.636364,20.56501,0.868508
+religion spirituality and finding meaning in life,40,0.9,0.818182,24.231491,0.879947
+religion spirituality and finding meaning in life,50,0.88,1.0,27.841691,0.931071
+loneliness epidemic and the decline of community,10,1.0,0.27027,9.087119,1.0
+loneliness epidemic and the decline of community,20,0.95,0.513514,13.852867,0.983831
+loneliness epidemic and the decline of community,30,0.8,0.648649,17.046636,0.930333
+loneliness epidemic and the decline of community,40,0.75,0.810811,20.134158,0.931347
+loneliness epidemic and the decline of community,50,0.74,1.0,23.210279,0.990833
+true history of slavery and its lasting legacy,10,0.9,0.264706,9.685745,0.804759
+true history of slavery and its lasting legacy,20,0.75,0.441176,13.904957,0.816546
+true history of slavery and its lasting legacy,30,0.7,0.617647,17.295023,0.813056
+true history of slavery and its lasting legacy,40,0.7,0.823529,20.566813,0.857278
+true history of slavery and its lasting legacy,50,0.68,1.0,23.630911,0.922317
+generational differences between millennials and Gen Z,10,1.0,0.208333,11.942795,0.87617
+generational differences between millennials and Gen Z,20,1.0,0.416667,18.700936,0.885427
+generational differences between millennials and Gen Z,30,1.0,0.625,23.76753,0.864754
+generational differences between millennials and Gen Z,40,0.975,0.8125,28.797571,0.912944
+generational differences between millennials and Gen Z,50,0.96,1.0,33.306458,0.956984
+NBA bubble season and LeBron James,10,1.0,0.2,11.221396,0.823246
+NBA bubble season and LeBron James,20,1.0,0.4,17.721725,0.839065
+NBA bubble season and LeBron James,30,1.0,0.6,22.809163,0.876371
+NBA bubble season and LeBron James,40,1.0,0.8,27.440128,0.918168
+NBA bubble season and LeBron James,50,1.0,1.0,31.773976,0.948501
+history of hip hop and rap music evolution,10,1.0,0.208333,13.630678,1.0
+history of hip hop and rap music evolution,20,1.0,0.416667,20.131007,0.953136
+history of hip hop and rap music evolution,30,0.966667,0.604167,25.446419,0.925838
+history of hip hop and rap music evolution,40,0.975,0.8125,31.046872,0.949174
+history of hip hop and rap music evolution,50,0.96,1.0,35.562127,0.988681
+Tour de France cycling and doping controversies,10,1.0,0.2,13.630678,1.0
+Tour de France cycling and doping controversies,20,1.0,0.4,21.120805,1.0
+Tour de France cycling and doping controversies,30,1.0,0.6,27.484743,1.0
+Tour de France cycling and doping controversies,40,1.0,0.8,33.273098,1.0
+Tour de France cycling and doping controversies,50,1.0,1.0,38.15053,0.999709
+NFL quarterback rivalries and Super Bowl predictions,10,1.0,0.238095,12.021143,0.881918
+NFL quarterback rivalries and Super Bowl predictions,20,0.95,0.452381,17.826842,0.844042
+NFL quarterback rivalries and Super Bowl predictions,30,0.866667,0.619048,22.27651,0.828947
+NFL quarterback rivalries and Super Bowl predictions,40,0.875,0.833333,27.096056,0.881684
+NFL quarterback rivalries and Super Bowl predictions,50,0.84,1.0,31.080188,0.954694
+Olympics postponement and athlete mental health,10,1.0,0.232558,11.852412,0.869539
+Olympics postponement and athlete mental health,20,0.85,0.395349,17.075591,0.835959
+Olympics postponement and athlete mental health,30,0.9,0.627907,21.949712,0.88977
+Olympics postponement and athlete mental health,40,0.875,0.813953,26.002377,0.911473
+Olympics postponement and athlete mental health,50,0.86,1.0,29.442505,0.95869
+Netflix binge watching and the streaming wars,10,1.0,0.227273,11.551382,0.847455
+Netflix binge watching and the streaming wars,20,0.9,0.409091,17.339154,0.820951
+Netflix binge watching and the streaming wars,30,0.9,0.613636,22.63083,0.876867
+Netflix binge watching and the streaming wars,40,0.9,0.818182,26.884231,0.90618
+Netflix binge watching and the streaming wars,50,0.88,1.0,30.856296,0.957992
+esports gaming industry growth and professional players,10,1.0,0.27027,11.956941,0.877208
+esports gaming industry growth and professional players,20,0.85,0.459459,17.411572,0.833363
+esports gaming industry growth and professional players,30,0.8,0.648649,21.443933,0.853125
+esports gaming industry growth and professional players,40,0.75,0.810811,25.307005,0.890123
+esports gaming industry growth and professional players,50,0.74,1.0,28.738059,0.950408
+Hollywood diversity Oscars so white debate,10,1.0,0.212766,13.630678,1.0
+Hollywood diversity Oscars so white debate,20,1.0,0.425532,20.622747,0.976419
+Hollywood diversity Oscars so white debate,30,1.0,0.638298,26.78289,0.974464
+Hollywood diversity Oscars so white debate,40,0.925,0.787234,30.44284,0.953172
+Hollywood diversity Oscars so white debate,50,0.94,1.0,34.784357,0.993264
+stand up comedy and the art of the punchline,10,1.0,0.227273,12.12733,0.889709
+stand up comedy and the art of the punchline,20,0.9,0.409091,17.89887,0.847452
+stand up comedy and the art of the punchline,30,0.9,0.613636,23.400757,0.851409
+stand up comedy and the art of the punchline,40,0.9,0.818182,28.41781,0.895278
+stand up comedy and the art of the punchline,50,0.88,1.0,32.935333,0.960674
+football soccer tactics and Premier League analysis,10,0.5,0.2,8.0013,0.587007
+football soccer tactics and Premier League analysis,20,0.5,0.4,12.039875,0.570048
+football soccer tactics and Premier League analysis,30,0.5,0.6,15.871057,0.646272
+football soccer tactics and Premier League analysis,40,0.5,0.8,19.154992,0.728308
+football soccer tactics and Premier League analysis,50,0.5,1.0,22.046869,0.838263
