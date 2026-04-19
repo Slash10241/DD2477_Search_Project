@@ -139,8 +139,6 @@ def parse_annotated_highlight_quality(
       <blank line>
     """
     data: dict[str, list[dict[str, Any]]] = {}
-    current_query: str | None = None
-    current_results: list[dict[str, Any]] = []
 
     lines = Path(filepath).read_text(encoding="utf-8").splitlines()
     i = 0
@@ -151,42 +149,39 @@ def parse_annotated_highlight_quality(
             i += 1
             continue
 
-        if line in known_queries and current_query != line:
-            if current_query is not None and current_results:
-                data[current_query] = current_results
-            current_query = line
-            current_results = []
+        if line not in known_queries:
             i += 1
             continue
 
-        if current_query is not None:
-            show = line
-
-            i += 1
-            while i < len(lines) and not lines[i].strip():
-                i += 1
-            episode = lines[i].strip() if i < len(lines) else ""
-
-            i += 1
-            while i < len(lines) and not lines[i].strip():
-                i += 1
-            score_line = lines[i].strip() if i < len(lines) else ""
-
-            if show and episode and re.fullmatch(r"[0-3]", score_line):
-                current_results.append(
-                    {
-                        "show": show,
-                        "episode": episode,
-                        "quality": int(score_line),
-                    }
-                )
-                i += 1
-                continue
+        query = line
 
         i += 1
+        while i < len(lines) and not lines[i].strip():
+            i += 1
+        show = lines[i].strip() if i < len(lines) else ""
 
-    if current_query is not None and current_results:
-        data[current_query] = current_results
+        i += 1
+        while i < len(lines) and not lines[i].strip():
+            i += 1
+        episode = lines[i].strip() if i < len(lines) else ""
+
+        i += 1
+        while i < len(lines) and not lines[i].strip():
+            i += 1
+        score_line = lines[i].strip() if i < len(lines) else ""
+
+        if show and episode and re.fullmatch(r"[0-3]", score_line):
+            data.setdefault(query, []).append(
+                {
+                    "show": show,
+                    "episode": episode,
+                    "quality": int(score_line),
+                }
+            )
+            i += 1
+            continue
+
+        i += 1
 
     return data
 

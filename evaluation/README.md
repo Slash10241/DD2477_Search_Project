@@ -121,6 +121,8 @@ Rules:
 
 Prompt for annotation:
 
+Model: Claude Sonnet 4.6
+
 - highlight_annotation_prompt.txt
 
 Run highlight evaluation:
