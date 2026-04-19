@@ -12,8 +12,10 @@ INDEX_NAME = "podcasts"
 API_KEY = os.environ.get("API_KEY")
 ES_CLIENT = Elasticsearch(ES_HOST, api_key=API_KEY)
 
+
 def search():
     return Search(using=ES_CLIENT, index=INDEX_NAME)
+
 
 class ResultSource(TypedDict):
     text: str
@@ -21,16 +23,25 @@ class ResultSource(TypedDict):
     show_filename_prefix: str
     start_time: float
     end_time: float
+    highlight_spans: NotRequired[list[list[int]]]
+    highlighted_text: NotRequired[str]
+
 
 class SearchResult(TypedDict):
-	score: float
-	source: ResultSource
+    score: float
+    source: ResultSource
+    show_name: NotRequired[str]
+    episode_name: NotRequired[str]
 
-class SearchResultWithOptionalMetadata(SearchResult):
-	show_name: NotRequired[str]
-	episode_name: NotRequired[str]
-      
-SearchResultPossiblyWithMetadata = SearchResult | SearchResultWithOptionalMetadata
+
+SearchResultPossiblyWithMetadata = SearchResult
+
 
 def source() -> list[str | Any]:
-    return list(ResultSource.__required_keys__)
+    return [
+        "text",
+        "episode_filename_prefix",
+        "show_filename_prefix",
+        "start_time",
+        "end_time",
+    ]

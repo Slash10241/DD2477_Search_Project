@@ -22,8 +22,19 @@
   {% elif q and results %}
     {% if summary_text %}
       <section class="results-summary-block" aria-label="Search summary">
-        <h4 class="results-summary-title">Summary</h4>
-        <p class="results-summary-text">{{ summary_text }}</p>
+        <div class="results-summary-header">
+          <h4 class="results-summary-title">Summary</h4>
+          <button
+            type="button"
+            class="summary-llm-button"
+            data-summary-llm
+          >
+            ✦ Summarize
+          </button>
+        </div>
+        <p class="results-summary-text">
+  Click “Summarize” to generate a query-aware summary.
+</p>
       </section>
     {% endif %}
 
@@ -32,9 +43,14 @@
         <li class="result-card">
           <h3 class="result-show-title">{{ item.show_name|default:item.source.show_filename_prefix }}</h3>
           <p class="result-episode-title">{{ item.episode_name|default:item.source.episode_filename_prefix }}</p>
+
           <div class="result-snippet-shell" data-result-snippet-shell>
             <div class="result-snippet-body">
-              <p class="result-snippet" data-result-snippet>{{ item.source.text }}</p>
+              {% if item.source.highlighted_text %}
+                <p class="result-snippet" data-result-snippet>{{ item.source.highlighted_text|safe }}</p>
+              {% else %}
+                <p class="result-snippet" data-result-snippet>{{ item.source.text }}</p>
+              {% endif %}
             </div>
             <button
               type="button"
@@ -45,6 +61,7 @@
               Show more
             </button>
           </div>
+
           <div class="result-meta">
             <label class="pill pill-score" aria-label="Score {{ item.score|floatformat:3 }}">
               <svg class="pill-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
@@ -54,6 +71,7 @@
               </svg>
               <span>{{ item.score|floatformat:3 }}</span>
             </label>
+
             <label class="pill pill-window" aria-label="Time window {{ item.source.start_time|seconds_to_hms }} to {{ item.source.end_time|seconds_to_hms }}">
               <span class="pill-window-start">{{ item.source.start_time|seconds_to_hms }}</span>
               <span class="pill-window-separator">&ndash;</span>
