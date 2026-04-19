@@ -1,6 +1,8 @@
 **Ranking**
 Use script getRankings.py to get rankings for each predefined list of queries.
 Queries used:
+
+
     # News & Politics (10)
     "COVID-19 pandemic response and lockdown measures",
     "2020 US presidential election and voter turnout",
