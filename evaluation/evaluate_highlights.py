@@ -276,15 +276,29 @@ def generate_predictions(
     model_name: str,
     batch_size: int,
     max_queries: int | None,
+    existing_predictions: dict[str, list[dict[str, Any]]] | None = None,
+    checkpoint_path: str | None = None,
 ) -> dict[str, list[dict[str, Any]]]:
     client = genai.Client(api_key=_api_key())
-    predictions: dict[str, list[dict[str, Any]]] = {}
+    predictions: dict[str, list[dict[str, Any]]] = existing_predictions or {}
 
     query_items = list(query_results.items())
     if max_queries is not None:
         query_items = query_items[:max_queries]
 
+    def _checkpoint_save() -> None:
+        if not checkpoint_path:
+            return
+        Path(checkpoint_path).write_text(
+            json.dumps(predictions, ensure_ascii=False, indent=2), encoding="utf-8"
+        )
+
     for q_idx, (query, results) in enumerate(query_items, start=1):
+        existing_rows = predictions.get(query, [])
+        if len(existing_rows) == len(results) and len(existing_rows) > 0:
+            print(f"[{q_idx}/{len(query_items)}] Skipping (already saved): {query}")
+            continue
+
         print(f"[{q_idx}/{len(query_items)}] Generating highlights for query: {query}")
         rows: list[dict[str, Any]] = []
 
@@ -306,6 +320,7 @@ def generate_predictions(
                 )
 
         predictions[query] = rows
+        _checkpoint_save()
 
     return predictions
 
@@ -717,15 +732,23 @@ def main() -> None:
         print(f"Loading cached predictions from '{args.predictions}' ...")
         predictions = json.loads(predictions_path.read_text(encoding="utf-8"))
     else:
+        existing_predictions: dict[str, list[dict[str, Any]]] = {}
+        if predictions_path.exists():
+            print(
+                f"Found existing predictions at '{args.predictions}', resuming generation ..."
+            )
+            existing_predictions = json.loads(
+                predictions_path.read_text(encoding="utf-8")
+            )
+
         print("Generating LLM highlight predictions ...")
         predictions = generate_predictions(
             query_results=query_results,
             model_name=args.model,
             batch_size=args.batch_size,
             max_queries=args.max_queries,
-        )
-        predictions_path.write_text(
-            json.dumps(predictions, ensure_ascii=False, indent=2), encoding="utf-8"
+            existing_predictions=existing_predictions,
+            checkpoint_path=args.predictions,
         )
         print(f"  Saved predictions to '{args.predictions}'")
 
