@@ -24,7 +24,6 @@ from __future__ import annotations
 import argparse
 import csv
 import json
-import math
 import os
 import re
 from pathlib import Path
@@ -389,20 +388,6 @@ def avg_quality_at_k(scores: list[int], k: int) -> float:
     return float(sum(top_k) / len(top_k))
 
 
-def dcg_at_k(scores: list[int], k: int) -> float:
-    total = 0.0
-    for i, s in enumerate(scores[:k], start=1):
-        total += s / math.log2(i + 1)
-    return total
-
-
-def ndcg_at_k(scores: list[int], k: int) -> float:
-    idcg = dcg_at_k(sorted(scores, reverse=True), k)
-    if idcg == 0:
-        return 0.0
-    return dcg_at_k(scores, k) / idcg
-
-
 def compute_highlight_metrics(
     annotations: dict[str, list[dict[str, Any]]],
     predictions: dict[str, list[dict[str, Any]]],
@@ -413,8 +398,6 @@ def compute_highlight_metrics(
     avg_r = {k: [] for k in K_VALUES}
     avg_f1 = {k: [] for k in K_VALUES}
     avg_q = {k: [] for k in K_VALUES}
-    avg_dcg = {k: [] for k in K_VALUES}
-    avg_ndcg = {k: [] for k in K_VALUES}
 
     p_curves: list[list[float]] = []
     r_curves: list[list[float]] = []
@@ -440,16 +423,12 @@ def compute_highlight_metrics(
         r_at_k = {k: recall_at_k(pred_pos, quality_scores, k) for k in K_VALUES}
         f1_at_k = {k: f1_score(p_at_k[k], r_at_k[k]) for k in K_VALUES}
         q_at_k = {k: avg_quality_at_k(quality_scores, k) for k in K_VALUES}
-        d_at_k = {k: dcg_at_k(quality_scores, k) for k in K_VALUES}
-        n_at_k = {k: ndcg_at_k(quality_scores, k) for k in K_VALUES}
 
         per_query[query] = {
             "precision": p_at_k,
             "recall": r_at_k,
             "f1": f1_at_k,
             "avg_quality": q_at_k,
-            "DCG": d_at_k,
-            "nDCG": n_at_k,
             "n_evaluated": n,
         }
 
@@ -458,8 +437,6 @@ def compute_highlight_metrics(
             avg_r[k].append(r_at_k[k])
             avg_f1[k].append(f1_at_k[k])
             avg_q[k].append(q_at_k[k])
-            avg_dcg[k].append(d_at_k[k])
-            avg_ndcg[k].append(n_at_k[k])
 
         p_curve: list[float] = []
         r_curve: list[float] = []
@@ -475,8 +452,6 @@ def compute_highlight_metrics(
             "recall": float(np.mean(avg_r[k])) if avg_r[k] else 0.0,
             "f1": float(np.mean(avg_f1[k])) if avg_f1[k] else 0.0,
             "avg_quality": float(np.mean(avg_q[k])) if avg_q[k] else 0.0,
-            "DCG": float(np.mean(avg_dcg[k])) if avg_dcg[k] else 0.0,
-            "nDCG": float(np.mean(avg_ndcg[k])) if avg_ndcg[k] else 0.0,
         }
         for k in K_VALUES
     }
@@ -514,8 +489,6 @@ def save_metrics_per_query(
                 "highlight_recall",
                 "highlight_f1",
                 "avg_quality",
-                "DCG",
-                "nDCG",
                 "n_evaluated",
             ]
         )
@@ -531,8 +504,6 @@ def save_metrics_per_query(
                         round(q["recall"][k], 6),
                         round(q["f1"][k], 6),
                         round(q["avg_quality"][k], 6),
-                        round(q["DCG"][k], 6),
-                        round(q["nDCG"][k], 6),
                         n_eval,
                     ]
                 )
@@ -550,8 +521,6 @@ def save_metrics_averaged(
                 "avg_highlight_recall",
                 "avg_highlight_f1",
                 "avg_quality",
-                "avg_DCG",
-                "avg_nDCG",
             ]
         )
         for k in K_VALUES:
@@ -563,8 +532,6 @@ def save_metrics_averaged(
                     round(q["recall"], 6),
                     round(q["f1"], 6),
                     round(q["avg_quality"], 6),
-                    round(q["DCG"], 6),
-                    round(q["nDCG"], 6),
                 ]
             )
 
@@ -585,7 +552,7 @@ def save_pr_curve_per_query(
 def plot_avg_precision_recall(
     results: dict[str, Any], output_path: str = AVG_PLOT_PATH
 ) -> None:
-    recall_grid = np.linspace(0, 1, 101)
+    recall_grid = np.array([i / 100 for i in range(101)], dtype=float)
     interp_precisions = [
         _interp_pr(p, r, recall_grid)
         for p, r in zip(results["p_curves"], results["r_curves"])
@@ -610,21 +577,14 @@ def plot_avg_precision_recall(
     for k, color in zip(K_VALUES, colors):
         r_k = results["averaged"][k]["recall"]
         p_k = results["averaged"][k]["precision"]
-        ax.scatter(
-            r_k,
-            p_k,
-            color=color,
-            s=90,
-            zorder=5,
-            label=f"HP@{k}={p_k:.3f}  HR@{k}={r_k:.3f}",
-        )
+        ax.scatter(r_k, p_k, color=color, s=90, zorder=5, label=f"k={k}")
 
     ax.set_xlabel("Recall", fontsize=13)
     ax.set_ylabel("Precision", fontsize=13)
-    ax.set_title("Average Highlight Precision-Recall Curve", fontsize=14)
+    # ax.set_title("Average Highlight Precision-Recall Curve", fontsize=14)
     ax.set_xlim(0, 1.02)
     ax.set_ylim(0, 1.05)
-    ax.legend(fontsize=9, loc="upper right")
+    ax.legend(fontsize=12, loc="lower right")
     ax.grid(True, linestyle="--", alpha=0.4)
     plt.tight_layout()
     plt.savefig(output_path, dpi=150)
@@ -678,14 +638,12 @@ def print_summary(results: dict[str, Any]) -> None:
     print("  Quality score: 0-3 (higher is better)")
     print(f"  High quality threshold for P/R: >= {QUALITY_POSITIVE_THRESHOLD}")
     print("=" * 78)
-    print(
-        f"\n{'K':>6} {'H-Precision':>14} {'H-Recall':>12} {'H-F1':>10} {'AvgQ':>10} {'nDCG':>10}"
-    )
-    print("-" * 74)
+    print(f"\n{'K':>6} {'H-Precision':>14} {'H-Recall':>12} {'H-F1':>10} {'AvgQ':>10}")
+    print("-" * 62)
     for k in K_VALUES:
         q = results["averaged"][k]
         print(
-            f"{k:>6} {q['precision']:>14.4f} {q['recall']:>12.4f} {q['f1']:>10.4f} {q['avg_quality']:>10.4f} {q['nDCG']:>10.4f}"
+            f"{k:>6} {q['precision']:>14.4f} {q['recall']:>12.4f} {q['f1']:>10.4f} {q['avg_quality']:>10.4f}"
         )
 
 
