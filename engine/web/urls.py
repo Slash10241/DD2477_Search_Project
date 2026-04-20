@@ -6,4 +6,6 @@ urlpatterns = [
     path("search", views.search, name="search"),
     path("llm/highlight", views.highlight_results, name="highlight_results"),
     path("llm/summarize", views.summarize_results, name="summarize_results"),
+    path("llm/feedback", views.feedback_results, name="feedback_results"),
+    path("llm/ask", views.ask_results, name="ask_results"),
 ]

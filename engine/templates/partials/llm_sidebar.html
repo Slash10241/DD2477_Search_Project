@@ -33,26 +33,33 @@
     </div>
 
     <div class="llm-sidebar-body">
-      <section class="llm-section is-active" data-llm-section="ask">
-        <label class="llm-label" for="llm-free-query">Ask with retrieved context</label>
-        <textarea
-          id="llm-free-query"
-          class="llm-textarea"
-          rows="6"
-          placeholder="Ask a question about the currently retrieved top results..."
-        ></textarea>
+    <section class="llm-section is-active" data-llm-section="ask">
+      <label class="llm-label" for="llm-free-query">Ask with retrieved context</label>
+      <textarea
+        id="llm-free-query"
+        class="llm-textarea"
+        rows="6"
+        placeholder="Ask a question about the currently retrieved top results..."
+      ></textarea>
 
-        <div class="llm-inline-row">
-          <label class="llm-small-label" for="llm-top-k">Use top-k</label>
-          <select id="llm-top-k" class="llm-select">
-            <option value="3">Top 3</option>
-            <option value="5" selected>Top 5</option>
-            <option value="10">Top 10</option>
-          </select>
-        </div>
+      <div class="llm-inline-row">
+        <label class="llm-small-label" for="llm-top-k">Use top-k</label>
+        <select id="llm-top-k" class="llm-select">
+          <option value="5" selected>Top 5</option>
+          <option value="10">Top 10</option>
+          <option value="20">Top 20</option>
+        </select>
+      </div>
 
-        <button type="button" class="llm-action-button">Run RAG Query</button>
-      </section>
+      <button type="button" class="llm-action-button" data-llm-ask-button>
+        Run RAG Query
+      </button>
+
+      <div class="llm-answer-block" data-llm-answer-block hidden>
+        <p class="llm-answer-title">Answer</p>
+        <div class="llm-answer-text" data-llm-answer-text></div>
+      </div>
+    </section>
 
       <section class="llm-section" data-llm-section="highlight">
         <p class="llm-section-text">
@@ -62,13 +69,15 @@
         <div class="llm-inline-row">
           <label class="llm-small-label" for="llm-highlight-k">Use top-k</label>
           <select id="llm-highlight-k" class="llm-select">
-            <option value="3">Top 3</option>
             <option value="5" selected>Top 5</option>
             <option value="10">Top 10</option>
+            <option value="20">Top 20</option>
           </select>
         </div>
 
-        <button type="button" class="llm-action-button" data-llm-highlight-button>Extract Highlights</button>
+        <button type="button" class="llm-action-button" data-llm-highlight-button>
+          Extract Highlights
+        </button>
       </section>
 
       <section class="llm-section" data-llm-section="feedback">
@@ -76,20 +85,27 @@
           Quickly evaluate the current retrieval output.
         </p>
 
+        <div class="llm-inline-row">
+          <label class="llm-small-label" for="llm-feedback-k">Use top-k</label>
+          <select id="llm-feedback-k" class="llm-select">
+            <option value="10" selected>Top 10</option>
+            <option value="20">Top 20</option>
+          </select>
+        </div>
 
-        <textarea
-          class="llm-textarea llm-textarea-small"
-          rows="4"
-          placeholder="Optional note..."
-        ></textarea>
+        <button type="button" class="llm-action-button" data-llm-feedback-button>
+          Score Results
+        </button>
 
-        <button type="button" class="llm-action-button">Save Feedback</button>
+        <button type="button" class="llm-action-button" data-save-feedback-button>
+          Save Feedback
+        </button>
       </section>
     </div>
 
     <div class="llm-sidebar-footer">
       <p class="llm-placeholder-note">
-        UI only for now. Backend hooks can be added later.
+        Feedback labels can be scored and exported.
       </p>
     </div>
   </div>

@@ -41,6 +41,99 @@ function renderHighlightedResults(results) {
 	});
 }
 
+
+let latestFeedbackState = null;
+
+function getFeedbackLabel(score) {
+	switch (score) {
+		case 0:
+			return "0 · Not relevant";
+		case 1:
+			return "1 · Mentioned";
+		case 2:
+			return "2 · Some detail";
+		case 3:
+			return "3 · Exhaustive";
+		default:
+			return "0 · Not relevant";
+	}
+}
+
+function renderFeedbackResults(results) {
+	const cards = document.querySelectorAll(".result-card");
+
+	results.forEach((result, index) => {
+		const card = cards[index];
+		if (!card) return;
+
+		const pill = card.querySelector("[data-feedback-pill]");
+		if (!pill) return;
+
+		const relevance = Number(result.feedback_relevance ?? 0);
+		pill.hidden = false;
+		pill.textContent = getFeedbackLabel(relevance);
+		pill.setAttribute("data-feedback-score", String(relevance));
+	});
+}
+
+function renderFeedbackMetrics(metrics) {
+	const shell = document.querySelector("[data-feedback-metrics]");
+	if (!shell) return;
+
+	const precisionEl = shell.querySelector("[data-feedback-precision]");
+	const mrrEl = shell.querySelector("[data-feedback-mrr]");
+	const ndcgEl = shell.querySelector("[data-feedback-ndcg]");
+
+	if (precisionEl) precisionEl.textContent = Number(metrics.precision_at_k ?? 0).toFixed(4);
+	if (mrrEl) mrrEl.textContent = Number(metrics.mrr ?? 0).toFixed(4);
+	if (ndcgEl) ndcgEl.textContent = Number(metrics.ndcg_at_k ?? 0).toFixed(4);
+
+	shell.hidden = false;
+}
+
+
+function buildFeedbackExportText() {
+	const queryInput = document.querySelector("input[name='q']");
+	const cards = document.querySelectorAll(".result-card");
+
+	const query = queryInput instanceof HTMLInputElement ? queryInput.value.trim() : "";
+	const topK = latestFeedbackState?.topK ?? cards.length;
+
+	const lines = [];
+	lines.push(`${query} ${topK}`);
+	lines.push("");
+
+	cards.forEach((card, index) => {
+		const pill = card.querySelector("[data-feedback-pill]");
+		const score = pill ? Number(pill.getAttribute("data-feedback-score") || "0") : 0;
+
+		const chunkText =
+			card.querySelector("[data-result-snippet]")?.textContent?.trim() || "";
+
+		lines.push(`${index}`);
+		lines.push(chunkText);
+		lines.push(`score ${score}`);
+		lines.push("");
+	});
+
+	return lines.join("\n");
+}
+
+function downloadTextFile(filename, content) {
+	const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+	const url = URL.createObjectURL(blob);
+
+	const a = document.createElement("a");
+	a.href = url;
+	a.download = filename;
+	document.body.appendChild(a);
+	a.click();
+	document.body.removeChild(a);
+
+	URL.revokeObjectURL(url);
+}
+
+
 document.addEventListener("DOMContentLoaded", () => {
 	const picker = document.querySelector("[data-mode-picker]");
 	const sidebar = document.querySelector("[data-llm-sidebar]");
@@ -214,7 +307,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 		const q = queryInput instanceof HTMLInputElement ? queryInput.value.trim() : "";
 		const mode = modeInput instanceof HTMLInputElement ? modeInput.value : "lexical";
-		const topK = topKSelect instanceof HTMLSelectElement ? Number(topKSelect.value) : 5;
+		const topK = topKSelect instanceof HTMLSelectElement ? Number(topKSelect.value) : 10;
 
 		if (!q) {
 			window.alert("Please enter a search query first.");
@@ -298,3 +391,168 @@ document.addEventListener("click", async (event) => {
     alert(err.message);
   }
 });
+
+
+document.addEventListener("click", async (event) => {
+	const feedbackButton = event.target instanceof Element
+		? event.target.closest("[data-llm-feedback-button]")
+		: null;
+
+	if (!feedbackButton) {
+		return;
+	}
+
+	const queryInput = document.querySelector("input[name='q']");
+	const modeInput = document.querySelector("#mode-input");
+	const topKSelect = document.querySelector("#llm-feedback-k");
+
+	const q = queryInput instanceof HTMLInputElement ? queryInput.value.trim() : "";
+	const mode = modeInput instanceof HTMLInputElement ? modeInput.value : "lexical";
+	const topK = topKSelect instanceof HTMLSelectElement ? Number(topKSelect.value) : 10;
+
+	if (!q) {
+		window.alert("Please enter a search query first.");
+		return;
+	}
+
+	feedbackButton.setAttribute("disabled", "true");
+	const originalText = feedbackButton.textContent;
+	feedbackButton.textContent = "Scoring...";
+
+	try {
+		const response = await fetch("/llm/feedback", {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+				"X-CSRFToken": getCookie("csrftoken") || "",
+			},
+			body: JSON.stringify({
+				q,
+				mode,
+				top_k: topK,
+			}),
+		});
+
+		const data = await response.json();
+
+		if (!response.ok) {
+			throw new Error(data.error || "Feedback scoring failed.");
+		}
+
+		renderFeedbackResults(data.results || []);
+		renderFeedbackMetrics(data.metrics || {});
+
+		latestFeedbackState = {
+			results: data.results || [],
+			metrics: data.metrics || {},
+			query: q,
+			mode,
+			topK,
+		};
+	} catch (error) {
+		console.error(error);
+		window.alert(error instanceof Error ? error.message : "Feedback scoring failed.");
+	} finally {
+		feedbackButton.removeAttribute("disabled");
+		feedbackButton.textContent = originalText || "Score Results";
+	}
+});
+
+document.addEventListener("click", (event) => {
+	const saveButton = event.target instanceof Element
+		? event.target.closest("[data-save-feedback-button]")
+		: null;
+
+	if (!saveButton) {
+		return;
+	}
+
+	if (!latestFeedbackState) {
+		window.alert("Please score the results first.");
+		return;
+	}
+
+	const q = latestFeedbackState.query || "query";
+	const safeName = q.replace(/[^\w\s-]/g, "").trim().replace(/\s+/g, "_") || "feedback";
+	const content = buildFeedbackExportText();
+
+	downloadTextFile(`${safeName}_feedback.txt`, content);
+});
+
+
+
+document.addEventListener("click", async (event) => {
+	const askButton = event.target instanceof Element
+		? event.target.closest("[data-llm-ask-button]")
+		: null;
+
+	if (!askButton) {
+		return;
+	}
+
+	const searchQueryInput = document.querySelector("input[name='q']");
+	const askQueryInput = document.querySelector("#llm-free-query");
+	const modeInput = document.querySelector("#mode-input");
+	const topKSelect = document.querySelector("#llm-top-k");
+
+	const q = searchQueryInput instanceof HTMLInputElement ? searchQueryInput.value.trim() : "";
+	const askQuery = askQueryInput instanceof HTMLTextAreaElement ? askQueryInput.value.trim() : "";
+	const mode = modeInput instanceof HTMLInputElement ? modeInput.value : "lexical";
+	const topK = topKSelect instanceof HTMLSelectElement ? Number(topKSelect.value) : 5;
+
+	if (!q) {
+		window.alert("Please enter a search query first.");
+		return;
+	}
+
+	if (!askQuery) {
+		window.alert("Please enter a question for the RAG query.");
+		return;
+	}
+
+	askButton.setAttribute("disabled", "true");
+	const originalText = askButton.textContent;
+	askButton.textContent = "Running...";
+
+try {
+	const response = await fetch("/llm/ask", {
+		method: "POST",
+		headers: {
+			"Content-Type": "application/json",
+			"X-CSRFToken": getCookie("csrftoken") || "",
+		},
+		body: JSON.stringify({
+			q,
+			ask_query: askQuery,
+			mode,
+			top_k: topK,
+		}),
+	});
+
+	const data = await response.json();
+
+	if (!response.ok) {
+		throw new Error(data.error || "RAG query failed.");
+	}
+
+	renderAskAnswer(data.answer || "No answer returned.");
+} catch (error) {
+	console.error(error);
+	renderAskAnswer(error instanceof Error ? error.message : "RAG query failed.");
+} finally {
+	askButton.removeAttribute("disabled");
+	askButton.textContent = originalText || "Run RAG Query";
+}
+});
+
+function renderAskAnswer(answer) {
+	const answerBlock = document.querySelector("[data-llm-answer-block]");
+	const answerText = document.querySelector("[data-llm-answer-text]");
+
+	if (!answerBlock || !answerText) {
+		return;
+	}
+
+	answerText.textContent = answer || "No answer returned.";
+	answerBlock.hidden = false;
+}

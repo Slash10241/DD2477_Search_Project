@@ -401,7 +401,6 @@ select {
 }
 
 .result-card:hover {
-	transform: translateY(-2px);
 	border-color: rgba(0, 191, 166, 0.28);
 	background: linear-gradient(180deg, rgba(29, 45, 78, 0.92) 0%, rgba(18, 29, 52, 0.98) 100%);
 }
@@ -791,7 +790,7 @@ ul {
 }
 
 .llm-section.is-active {
-	display: grid;
+  display: block;
 }
 
 .llm-label,
@@ -970,4 +969,23 @@ ul {
 	transform: translateY(-1px);
 	border-color: rgba(0, 191, 166, 0.5);
 	background: rgba(0, 191, 166, 0.18);
+}
+
+
+.llm-answer-block {
+  margin-top: 1rem;
+  padding: 1rem;
+  border-radius: 16px;
+  border: 1px solid rgba(0, 255, 220, 0.16);
+  background: rgba(7, 18, 48, 0.75);
+}
+
+.llm-answer-title {
+  margin: 0 0 0.5rem;
+  font-weight: 700;
+}
+
+.llm-answer-text {
+  white-space: pre-wrap;
+  line-height: 1.6;
 }
