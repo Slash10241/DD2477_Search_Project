@@ -9,7 +9,7 @@ cd engine
 uv sync
 uv run python manage.py check
 uv run python manage.py runserver
-````
+```
 
 The server will be available at:
 
@@ -30,14 +30,16 @@ API_KEY=your_elasticsearch_api_key
 METADATA_TSV_PATH=/absolute/path/to/metadata.tsv
 GEMINI_API_KEY=your_gemini_api_key
 GEMINI_MODEL=gemini-2.5-flash-lite
+GEMINI_FEEDBACK_MODEL=gemini-3.1-flash-lite-preview
 ```
 
 ### Notes
 
 * `API_KEY` → used for Elasticsearch queries
 * `METADATA_TSV_PATH` → used for loading show/episode metadata
-* `GEMINI_API_KEY` → used for LLM features (highlighting + summarization)
-* `GEMINI_MODEL` → shared model used across features (not hardcoded)
+* `GEMINI_API_KEY` → used for LLM features (highlighting, summarization, and feedback)
+* `GEMINI_MODEL` → shared model used for highlighting, summarization, and RAG
+* `GEMINI_FEEDBACK_MODEL` → model used for assigning relevance scores (0–3) to results
 
 You can generate a Gemini API key from:
 [https://aistudio.google.com/app/apikey](https://aistudio.google.com/app/apikey)

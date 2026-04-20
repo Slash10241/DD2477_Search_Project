@@ -10,7 +10,7 @@ print(os.environ.get("GEMINI_API_KEY"))
 prompt = "Return JSON: {\"test\": \"ok\"}"
 
 response = client.models.generate_content(
-    model="gemini-2.5-flash-lite",
+    model="gemini-3.1-flash-lite-preview",
     contents=prompt,
     config={
         "response_mime_type": "application/json",

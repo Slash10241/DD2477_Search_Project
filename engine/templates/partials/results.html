@@ -17,30 +17,50 @@
     {% endif %}
   </div>
 
+  <section class="feedback-metrics" data-feedback-metrics hidden>
+    <span class="pill pill-feedback-metric">
+      P@k: <strong data-feedback-precision>0.0000</strong>
+    </span>
+    <span class="pill pill-feedback-metric">
+      MRR: <strong data-feedback-mrr>0.0000</strong>
+    </span>
+    <span class="pill pill-feedback-metric">
+      nDCG@k: <strong data-feedback-ndcg>0.0000</strong>
+    </span>
+  </section>
+
   {% if error_message %}
     <p class="error">Search failed: {{ error_message }}</p>
   {% elif q and results %}
-    {% if summary_text %}
-      <section class="results-summary-block" aria-label="Search summary">
-        <div class="results-summary-header">
-          <h4 class="results-summary-title">Summary</h4>
-          <button
-            type="button"
-            class="summary-llm-button"
-            data-summary-llm
-          >
-            ✦ Summarize
-          </button>
-        </div>
-        <p class="results-summary-text">
-  Click “Summarize” to generate a query-aware summary.
-</p>
-      </section>
-    {% endif %}
+    <section class="results-summary-block" aria-label="Search summary">
+      <div class="results-summary-header">
+        <h4 class="results-summary-title">Summary</h4>
+        <button
+          type="button"
+          class="summary-llm-button"
+          data-summary-llm
+        >
+          ✦ Summarize
+        </button>
+      </div>
+      <p class="results-summary-text">
+        {% if summary_text %}
+          {{ summary_text }}
+        {% else %}
+          Click “Summarize” to generate a query-aware summary.
+        {% endif %}
+      </p>
+    </section>
 
     <ul class="results-list">
       {% for item in results %}
-        <li class="result-card">
+        <li
+          class="result-card"
+          data-show-name="{{ item.show_name|default:item.source.show_filename_prefix }}"
+          data-episode-name="{{ item.episode_name|default:item.source.episode_filename_prefix }}"
+          data-start-time="{{ item.source.start_time|seconds_to_hms }}"
+          data-end-time="{{ item.source.end_time|seconds_to_hms }}"
+        >
           <h3 class="result-show-title">{{ item.show_name|default:item.source.show_filename_prefix }}</h3>
           <p class="result-episode-title">{{ item.episode_name|default:item.source.episode_filename_prefix }}</p>
 
@@ -77,6 +97,8 @@
               <span class="pill-window-separator">&ndash;</span>
               <span class="pill-window-end">{{ item.source.end_time|seconds_to_hms }}</span>
             </label>
+
+            <span class="pill pill-feedback" data-feedback-pill hidden></span>
           </div>
         </li>
       {% endfor %}
