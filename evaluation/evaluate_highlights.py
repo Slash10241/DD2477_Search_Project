@@ -577,14 +577,7 @@ def plot_avg_precision_recall(
     for k, color in zip(K_VALUES, colors):
         r_k = results["averaged"][k]["recall"]
         p_k = results["averaged"][k]["precision"]
-        ax.scatter(
-            r_k,
-            p_k,
-            color=color,
-            s=90,
-            zorder=5,
-            label=f"P@{k}={p_k:.3f}  R@{k}={r_k:.3f}",
-        )
+        ax.scatter(r_k, p_k, color=color, s=90, zorder=5, label=f"k={k}")
 
     ax.set_xlabel("Recall", fontsize=13)
     ax.set_ylabel("Precision", fontsize=13)
