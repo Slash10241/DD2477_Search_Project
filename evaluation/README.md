@@ -2,7 +2,6 @@
 Use script getRankings.py to get rankings for each predefined list of queries.
 Queries used:
 
-
     # News & Politics (10)
     "COVID-19 pandemic response and lockdown measures",
     "2020 US presidential election and voter turnout",
@@ -77,13 +76,12 @@ Queries used:
 
 Results are saved in query_results.txt
 
-
 **Annotation**
-LLM Model used to annotate: 
+LLM Model used to annotate:
 Claude Sonnet 4.6
 
 Prompt used to annotate the results:
-You are a data annotation engineer. I want you to go through each query and return a txt file  with relevance for each query.You need to rank these clips on relevance from 0-3 where 0 is not relevant 1 means just the query is mentioned 2 means there is more detail but is not exhaustive and 3 means topic is exhaustively discussed. the 1st line is show name 2nd is episode name then the next paragraph is 2 min clip transcript. Give the results in the following format and save it in a txt file.
+You are a data annotation engineer. I want you to go through each query and return a txt file with relevance for each query.You need to rank these clips on relevance from 0-3 where 0 is not relevant 1 means just the query is mentioned 2 means there is more detail but is not exhaustive and 3 means topic is exhaustively discussed. the 1st line is show name 2nd is episode name then the next paragraph is 2 min clip transcript. Give the results in the following format and save it in a txt file.
 <query>
 <Show name>
 <episode name>
@@ -95,3 +93,56 @@ Annotated file: annotated_results.txt
 **Evaluate metrics**
 Run file evaluate_metrics.py
 Results stored in results folder.
+
+**Evaluate LLM Highlighting**
+Use the files and steps below for highlight-quality evaluation only.
+
+Input files:
+
+- query_results.txt
+- annotated_highlight_quality.txt
+
+Gold annotation format (annotated_highlight_quality.txt):
+<query>
+<Show name>
+<episode name>
+<quality_score 0-3>
+<\n>
+
+Rules:
+
+- Query line must exactly match query text in query_results.txt
+- Keep same result order as query_results.txt
+- Score meaning:
+  - 0: bad highlight quality
+  - 1: weak highlight quality
+  - 2: good highlight quality
+  - 3: excellent highlight quality
+
+Prompt for annotation:
+
+Model: Claude Sonnet 4.6
+
+- highlight_annotation_prompt.txt
+
+Run highlight evaluation:
+uv run evaluate_highlights.py
+
+The script also exports an annotation helper file:
+
+- results/highlight_annotation_input.txt
+
+Use that file as the source when producing annotated_highlight_quality.txt.
+
+Reuse cached predictions (no new LLM calls):
+uv run evaluate_highlights.py --reuse-predictions
+
+Highlight outputs in results folder:
+
+- highlight_predictions.json
+- highlight_annotation_input.txt
+- highlight_metrics_per_query.csv
+- highlight_metrics_averaged.csv
+- highlight_pr_curve_per_query.csv
+- highlight_pr_curve.png
+- highlight_pr_curves_per_query/

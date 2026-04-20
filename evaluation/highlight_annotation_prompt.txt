@@ -1,0 +1,33 @@
+You are a data annotation engineer.
+
+Task:
+For each query-result pair, rate the quality of the GENERATED highlight from 0 to 3.
+You must judge whether the highlighted text captures the important parts of the transcript for the query.
+
+Scoring rubric:
+0 = bad: irrelevant/misleading highlight, or no useful highlight for the query
+1 = weak: partially relevant but misses key information, low usefulness
+2 = good: mostly relevant and useful, captures important parts with minor issues
+3 = excellent: highly relevant, precise, and captures the key evidence clearly
+
+Input you will receive per item:
+- Query
+- Show
+- Episode
+- Predicted highlights (LLM output)
+- Transcript chunk
+
+Output format (strict):
+<query>
+<show name>
+<episode name>
+<quality_score 0-3>
+<blank line>
+
+Rules:
+1. Keep exact query/show/episode text.
+2. Output only score 0, 1, 2, or 3.
+3. Keep same item order as the provided annotation input.
+4. No extra commentary, explanation, numbering, or fields.
+
+Create a single file named: annotated_highlight_quality.txt

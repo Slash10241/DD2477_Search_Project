@@ -1,2 +1,3 @@
 elastic-start-local/
 .env
+__pycache__
