@@ -1,91 +1,44 @@
 """
 Run predefined queries against the podcast search index and save results to a txt file.
-Uses hybrid_search for best quality, enriches with metadata, and formats output.
+Supports hybrid, vector, or lexical search. Output file is named accordingly.
 """
 
+import argparse
+
 from search.hybrid_search import hybrid_search
+from search.vector_search import vector_search
+from search.lexical_search import lexical_search
 from search.metadata_lookup import enrich_results_with_metadata, warm_metadata_cache
 
 # ── Configuration ────────────────────────────────────────────────────────────
 
-MAX_RESULTS = 50
+MAX_RESULTS = 20
 NUM_CANDIDATES = 200  # candidates to consider for kNN; must be >= MAX_RESULTS
-K = 50                # nearest neighbours returned by kNN
+K = 20                # nearest neighbours returned by kNN
 
-OUTPUT_FILE = "query_results.txt"
+SEARCH_MODES = ("hybrid", "vector", "lexical")
 
 QUERIES = [
-    # News & Politics (10)
     "COVID-19 pandemic response and lockdown measures",
     "2020 US presidential election and voter turnout",
     "Black Lives Matter protests and racial justice",
-    "Brexit negotiations and the UK leaving the EU",
-    "Trump impeachment trial and Senate acquittal",
-    "wildfires in Australia and California 2020",
-    "Hong Kong protests and China national security law",
-    "refugee crisis and immigration policy debates",
-    "rise of populism and nationalist movements in Europe",
-    "United Nations climate summit and global cooperation",
-
-    # Science & Technology (10)
-    "artificial intelligence and machine learning breakthroughs",
-    "mRNA vaccines and the future of medicine",
-    "climate change policy and the Paris Agreement",
-    "SpaceX Falcon 9 and commercial space travel",
-    "5G technology rollout and conspiracy theories",
-    "CRISPR gene editing and biotech innovation",
-    "quantum computing and its practical applications",
-    "deepfake technology and synthetic media risks",
-    "privacy concerns and surveillance capitalism",
-    "autonomous self-driving cars and the future of transport",
-
-    # Business & Economics (10)
-    "remote work and the future of the office",
-    "stock market crash and economic recession 2020",
-    "gig economy and worker rights",
-    "startup fundraising and venture capital",
-    "Amazon and big tech monopoly concerns",
-    "personal finance and investing for beginners",
-    "cryptocurrency Bitcoin surge and institutional adoption",
-    "supply chain disruption and global trade",
-    "universal basic income and wealth inequality",
-    "women in leadership and the gender pay gap",
-
-    # Health & Wellbeing (10)
-    "mental health during quarantine and isolation",
-    "sleep science and improving sleep quality",
-    "mindfulness meditation and stress reduction",
-    "addiction recovery and substance abuse",
-    "diet culture and body positivity movement",
-    "long COVID symptoms and post-viral fatigue",
-    "therapy and the stigma around seeking help",
-    "exercise science and high intensity interval training",
-    "gut health microbiome and its effect on mood",
-    "burnout and chronic workplace stress",
-
-    # Culture & Society (10)
-    "true crime investigations and criminal psychology",
-    "social media addiction and its effects on teenagers",
-    "diversity and inclusion in the workplace",
-    "cancel culture and free speech debate",
-    "parenting advice and raising children",
-    "feminism and gender equality in 2020",
-    "religion spirituality and finding meaning in life",
-    "loneliness epidemic and the decline of community",
-    "true history of slavery and its lasting legacy",
-    "generational differences between millennials and Gen Z",
-
-    # Sport & Entertainment (10)
-    "NBA bubble season and LeBron James",
-    "history of hip hop and rap music evolution",
-    "Tour de France cycling and doping controversies",
-    "NFL quarterback rivalries and Super Bowl predictions",
-    "Olympics postponement and athlete mental health",
-    "Netflix binge watching and the streaming wars",
-    "esports gaming industry growth and professional players",
-    "Hollywood diversity Oscars so white debate",
-    "stand up comedy and the art of the punchline",
-    "football soccer tactics and Premier League analysis",
+    # "Trump impeachment trial and Senate acquittal",
+    # "wildfires in Australia and California 2020",
+    # "Hong Kong protests and China national security law",
+    # "Brexit negotiations and the UK leaving the EU",
+    # "mental health during quarantine and isolation",
+    # "remote work and the future of the office",
+    # "stock market crash and economic recession 2020",
+    # "artificial intelligence and machine learning breakthroughs",
+    # "mRNA vaccines and the future of medicine",
+    # "climate change policy and the Paris Agreement",
+    # "cryptocurrency Bitcoin surge and institutional adoption",
+    # "privacy concerns and surveillance capitalism",
+    # "social media addiction and its effects on teenagers",
+    # "Netflix binge watching and the streaming wars",
+    # "Olympics postponement and athlete mental health",
+    # "5G technology rollout and conspiracy theories",
+    # "SpaceX Falcon 9 and commercial space travel",
 ]
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -116,22 +69,45 @@ def format_result(rank: int, result) -> str:
     return "\n".join(lines)
 
 
-def run_all_queries() -> None:
+def run_search(query_text: str, mode: str) -> list:
+    """Dispatch to the appropriate search function based on mode."""
+    if mode == "hybrid":
+        return hybrid_search(
+            query_text=query_text,
+            num_candidates=NUM_CANDIDATES,
+            k=K,
+            max_results=MAX_RESULTS,
+        )
+    elif mode == "vector":
+        return vector_search(
+            query_text=query_text,
+            num_candidates=NUM_CANDIDATES,
+            k=K,
+            max_results=MAX_RESULTS,
+        )
+    elif mode == "lexical":
+        return lexical_search(
+            query_text=query_text,
+            max_results=MAX_RESULTS,
+        )
+    else:
+        raise ValueError(f"Unknown search mode: {mode!r}. Choose from {SEARCH_MODES}.")
+
+
+def run_all_queries(mode: str) -> None:
+    output_file = f"query_outputs/query_results_{mode}.txt"
+
+    print(f"Search mode : {mode}")
+    print(f"Output file : {output_file}")
     print("Warming metadata cache …")
     cached = warm_metadata_cache()
     print(f"  {cached} shows loaded.\n")
 
-    with open(OUTPUT_FILE, "w", encoding="utf-8") as fh:
+    with open(output_file, "w", encoding="utf-8") as fh:
         for query_text in QUERIES:
             print(f"Querying: {query_text!r}")
 
-            raw_results = hybrid_search(
-                query_text=query_text,
-                num_candidates=NUM_CANDIDATES,
-                k=K,
-                max_results=MAX_RESULTS,
-            )
-
+            raw_results = run_search(query_text, mode)
             enriched = enrich_results_with_metadata(raw_results)
             num_found = len(enriched)
 
@@ -145,8 +121,24 @@ def run_all_queries() -> None:
             fh.write("\n")  # blank line between queries
             print(f"  → {num_found} results written.\n")
 
-    print(f"Done. Results saved to '{OUTPUT_FILE}'.")
+    print(f"Done. Results saved to '{output_file}'.")
+
+
+# ── Entry point ───────────────────────────────────────────────────────────────
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Run predefined queries against the podcast search index."
+    )
+    parser.add_argument(
+        "--mode",
+        choices=SEARCH_MODES,
+        default="hybrid",
+        help="Search mode to use (default: hybrid).",
+    )
+    return parser.parse_args()
 
 
 if __name__ == "__main__":
-    run_all_queries()
+    args = parse_args()
+    run_all_queries(mode=args.mode)

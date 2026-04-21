@@ -8,10 +8,10 @@ dependencies = [
     "django-htmx>=1.27.0",
     "dotenv>=0.9.9",
     "elasticsearch>=9.3.0",
-    "google-genai>=1.73.1",
     "sentence-transformers>=5.4.0",
     "matplotlib",
     "numpy",
+    "google-generativeai",
 ]
 
 [project.optional-dependencies]
