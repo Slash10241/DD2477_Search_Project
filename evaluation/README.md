@@ -2,6 +2,7 @@
 Use script getRankings.py to get rankings for each predefined list of queries.
 Queries used:
 QUERIES = 
+
     "COVID-19 pandemic response and lockdown measures",
     "2020 US presidential election and voter turnout",
     "Black Lives Matter protests and racial justice",
@@ -22,6 +23,7 @@ QUERIES =
     "Olympics postponement and athlete mental health",
     "5G technology rollout and conspiracy theories",
     "SpaceX Falcon 9 and commercial space travel",
+
 
 Results are saved in query_<mode>_results.txt
 
