@@ -11,7 +11,8 @@ dependencies = [
     "sentence-transformers>=5.4.0",
     "matplotlib",
     "numpy",
-    "google-generativeai",
+    "google-genai>=1.73.1",
+    "google-generativeai>=0.8.6",
 ]
 
 [project.optional-dependencies]

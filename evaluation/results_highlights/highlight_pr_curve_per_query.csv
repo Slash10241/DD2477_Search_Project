@@ -1,0 +1,264 @@
+query,rank,precision,recall
+COVID-19 pandemic response and lockdown measures,1,0.0,0.0
+COVID-19 pandemic response and lockdown measures,2,0.5,0.125
+COVID-19 pandemic response and lockdown measures,3,0.5,0.125
+COVID-19 pandemic response and lockdown measures,4,0.333333,0.125
+COVID-19 pandemic response and lockdown measures,5,0.25,0.125
+COVID-19 pandemic response and lockdown measures,6,0.25,0.125
+COVID-19 pandemic response and lockdown measures,7,0.4,0.25
+COVID-19 pandemic response and lockdown measures,8,0.333333,0.25
+COVID-19 pandemic response and lockdown measures,9,0.428571,0.375
+COVID-19 pandemic response and lockdown measures,10,0.375,0.375
+COVID-19 pandemic response and lockdown measures,11,0.444444,0.5
+COVID-19 pandemic response and lockdown measures,12,0.4,0.5
+COVID-19 pandemic response and lockdown measures,13,0.363636,0.5
+COVID-19 pandemic response and lockdown measures,14,0.416667,0.625
+COVID-19 pandemic response and lockdown measures,15,0.384615,0.625
+COVID-19 pandemic response and lockdown measures,16,0.357143,0.625
+COVID-19 pandemic response and lockdown measures,17,0.333333,0.625
+COVID-19 pandemic response and lockdown measures,18,0.375,0.75
+COVID-19 pandemic response and lockdown measures,19,0.411765,0.875
+COVID-19 pandemic response and lockdown measures,20,0.411765,0.875
+2020 US presidential election and voter turnout,1,1.0,0.083333
+2020 US presidential election and voter turnout,2,1.0,0.166667
+2020 US presidential election and voter turnout,3,1.0,0.25
+2020 US presidential election and voter turnout,4,1.0,0.333333
+2020 US presidential election and voter turnout,5,1.0,0.416667
+2020 US presidential election and voter turnout,6,1.0,0.5
+2020 US presidential election and voter turnout,7,1.0,0.5
+2020 US presidential election and voter turnout,8,1.0,0.583333
+2020 US presidential election and voter turnout,9,1.0,0.583333
+2020 US presidential election and voter turnout,10,1.0,0.666667
+2020 US presidential election and voter turnout,11,1.0,0.75
+2020 US presidential election and voter turnout,12,1.0,0.75
+2020 US presidential election and voter turnout,13,1.0,0.833333
+2020 US presidential election and voter turnout,14,1.0,0.916667
+2020 US presidential election and voter turnout,15,1.0,0.916667
+2020 US presidential election and voter turnout,16,1.0,1.0
+2020 US presidential election and voter turnout,17,0.923077,1.0
+2020 US presidential election and voter turnout,18,0.857143,1.0
+2020 US presidential election and voter turnout,19,0.857143,1.0
+Black Lives Matter protests and racial justice,1,1.0,0.066667
+Black Lives Matter protests and racial justice,2,1.0,0.133333
+Black Lives Matter protests and racial justice,3,1.0,0.2
+Black Lives Matter protests and racial justice,4,1.0,0.266667
+Black Lives Matter protests and racial justice,5,1.0,0.333333
+Black Lives Matter protests and racial justice,6,1.0,0.4
+Black Lives Matter protests and racial justice,7,1.0,0.466667
+Black Lives Matter protests and racial justice,8,1.0,0.533333
+Black Lives Matter protests and racial justice,9,1.0,0.6
+Black Lives Matter protests and racial justice,10,0.9,0.6
+Black Lives Matter protests and racial justice,11,0.909091,0.666667
+Black Lives Matter protests and racial justice,12,0.833333,0.666667
+Black Lives Matter protests and racial justice,13,0.846154,0.733333
+Black Lives Matter protests and racial justice,14,0.785714,0.733333
+Black Lives Matter protests and racial justice,15,0.8,0.8
+Black Lives Matter protests and racial justice,16,0.8125,0.866667
+Black Lives Matter protests and racial justice,17,0.823529,0.933333
+Black Lives Matter protests and racial justice,18,0.833333,1.0
+Trump impeachment trial and Senate acquittal,1,0.0,0.0
+Trump impeachment trial and Senate acquittal,2,0.5,0.076923
+Trump impeachment trial and Senate acquittal,3,0.333333,0.076923
+Trump impeachment trial and Senate acquittal,4,0.25,0.076923
+Trump impeachment trial and Senate acquittal,5,0.2,0.076923
+Trump impeachment trial and Senate acquittal,6,0.166667,0.076923
+Trump impeachment trial and Senate acquittal,7,0.285714,0.153846
+Trump impeachment trial and Senate acquittal,8,0.375,0.230769
+Trump impeachment trial and Senate acquittal,9,0.444444,0.307692
+Trump impeachment trial and Senate acquittal,10,0.5,0.384615
+Trump impeachment trial and Senate acquittal,11,0.5,0.384615
+Trump impeachment trial and Senate acquittal,12,0.545455,0.461538
+Trump impeachment trial and Senate acquittal,13,0.583333,0.538462
+Trump impeachment trial and Senate acquittal,14,0.538462,0.538462
+Trump impeachment trial and Senate acquittal,15,0.571429,0.615385
+Trump impeachment trial and Senate acquittal,16,0.6,0.692308
+Trump impeachment trial and Senate acquittal,17,0.625,0.769231
+Trump impeachment trial and Senate acquittal,18,0.647059,0.846154
+Trump impeachment trial and Senate acquittal,19,0.666667,0.923077
+Hong Kong protests and China national security law,1,1.0,0.076923
+Hong Kong protests and China national security law,2,1.0,0.153846
+Hong Kong protests and China national security law,3,1.0,0.230769
+Hong Kong protests and China national security law,4,1.0,0.307692
+Hong Kong protests and China national security law,5,1.0,0.384615
+Hong Kong protests and China national security law,6,0.833333,0.384615
+Hong Kong protests and China national security law,7,0.857143,0.461538
+Hong Kong protests and China national security law,8,0.875,0.538462
+Hong Kong protests and China national security law,9,0.888889,0.615385
+Hong Kong protests and China national security law,10,0.8,0.615385
+Hong Kong protests and China national security law,11,0.818182,0.692308
+Hong Kong protests and China national security law,12,0.75,0.692308
+Hong Kong protests and China national security law,13,0.769231,0.769231
+Hong Kong protests and China national security law,14,0.714286,0.769231
+Hong Kong protests and China national security law,15,0.733333,0.846154
+Hong Kong protests and China national security law,16,0.75,0.923077
+Hong Kong protests and China national security law,17,0.705882,0.923077
+Hong Kong protests and China national security law,18,0.722222,1.0
+Hong Kong protests and China national security law,19,0.684211,1.0
+Brexit negotiations and the UK leaving the EU,1,1.0,0.066667
+Brexit negotiations and the UK leaving the EU,2,1.0,0.133333
+Brexit negotiations and the UK leaving the EU,3,1.0,0.2
+Brexit negotiations and the UK leaving the EU,4,0.75,0.2
+Brexit negotiations and the UK leaving the EU,5,0.8,0.266667
+Brexit negotiations and the UK leaving the EU,6,0.666667,0.266667
+Brexit negotiations and the UK leaving the EU,7,0.714286,0.333333
+Brexit negotiations and the UK leaving the EU,8,0.75,0.4
+Brexit negotiations and the UK leaving the EU,9,0.777778,0.466667
+Brexit negotiations and the UK leaving the EU,10,0.8,0.533333
+Brexit negotiations and the UK leaving the EU,11,0.727273,0.533333
+Brexit negotiations and the UK leaving the EU,12,0.75,0.6
+Brexit negotiations and the UK leaving the EU,13,0.769231,0.666667
+Brexit negotiations and the UK leaving the EU,14,0.785714,0.733333
+Brexit negotiations and the UK leaving the EU,15,0.733333,0.733333
+Brexit negotiations and the UK leaving the EU,16,0.6875,0.733333
+Brexit negotiations and the UK leaving the EU,17,0.705882,0.8
+Brexit negotiations and the UK leaving the EU,18,0.722222,0.866667
+Brexit negotiations and the UK leaving the EU,19,0.736842,0.933333
+Brexit negotiations and the UK leaving the EU,20,0.75,1.0
+mental health during quarantine and isolation,1,0.0,0.0
+mental health during quarantine and isolation,2,0.0,0.0
+mental health during quarantine and isolation,3,0.0,0.0
+mental health during quarantine and isolation,4,0.0,0.0
+mental health during quarantine and isolation,5,0.25,0.2
+mental health during quarantine and isolation,6,0.25,0.2
+mental health during quarantine and isolation,7,0.4,0.4
+mental health during quarantine and isolation,8,0.4,0.4
+mental health during quarantine and isolation,9,0.4,0.4
+mental health during quarantine and isolation,10,0.333333,0.4
+mental health during quarantine and isolation,11,0.333333,0.4
+mental health during quarantine and isolation,12,0.428571,0.6
+mental health during quarantine and isolation,13,0.5,0.8
+mental health during quarantine and isolation,14,0.555556,1.0
+mental health during quarantine and isolation,15,0.555556,1.0
+remote work and the future of the office,1,1.0,0.0625
+remote work and the future of the office,2,1.0,0.125
+remote work and the future of the office,3,0.666667,0.125
+remote work and the future of the office,4,0.75,0.1875
+remote work and the future of the office,5,0.6,0.1875
+remote work and the future of the office,6,0.666667,0.25
+remote work and the future of the office,7,0.571429,0.25
+remote work and the future of the office,8,0.625,0.3125
+remote work and the future of the office,9,0.666667,0.375
+remote work and the future of the office,10,0.7,0.4375
+remote work and the future of the office,11,0.727273,0.5
+remote work and the future of the office,12,0.75,0.5625
+remote work and the future of the office,13,0.769231,0.625
+remote work and the future of the office,14,0.785714,0.6875
+remote work and the future of the office,15,0.8,0.75
+remote work and the future of the office,16,0.8,0.75
+remote work and the future of the office,17,0.8125,0.8125
+remote work and the future of the office,18,0.823529,0.875
+remote work and the future of the office,19,0.777778,0.875
+remote work and the future of the office,20,0.789474,0.9375
+stock market crash and economic recession 2020,1,1.0,0.5
+stock market crash and economic recession 2020,2,1.0,1.0
+wildfires in Australia and California 2020,1,0.0,0.0
+wildfires in Australia and California 2020,2,0.5,0.5
+wildfires in Australia and California 2020,3,0.666667,1.0
+wildfires in Australia and California 2020,4,0.666667,1.0
+artificial intelligence and machine learning breakthroughs,1,1.0,0.083333
+artificial intelligence and machine learning breakthroughs,2,1.0,0.166667
+artificial intelligence and machine learning breakthroughs,3,1.0,0.25
+artificial intelligence and machine learning breakthroughs,4,1.0,0.333333
+artificial intelligence and machine learning breakthroughs,5,1.0,0.416667
+artificial intelligence and machine learning breakthroughs,6,1.0,0.5
+artificial intelligence and machine learning breakthroughs,7,1.0,0.583333
+artificial intelligence and machine learning breakthroughs,8,1.0,0.666667
+artificial intelligence and machine learning breakthroughs,9,1.0,0.75
+artificial intelligence and machine learning breakthroughs,10,0.9,0.75
+artificial intelligence and machine learning breakthroughs,11,0.909091,0.833333
+artificial intelligence and machine learning breakthroughs,12,0.916667,0.916667
+artificial intelligence and machine learning breakthroughs,13,0.923077,1.0
+artificial intelligence and machine learning breakthroughs,14,0.857143,1.0
+mRNA vaccines and the future of medicine,1,0.0,0.0
+mRNA vaccines and the future of medicine,2,0.0,0.0
+mRNA vaccines and the future of medicine,3,0.0,0.0
+mRNA vaccines and the future of medicine,4,0.0,0.0
+mRNA vaccines and the future of medicine,5,0.0,0.0
+climate change policy and the Paris Agreement,1,0.0,0.0
+climate change policy and the Paris Agreement,2,0.5,0.076923
+climate change policy and the Paris Agreement,3,0.666667,0.153846
+climate change policy and the Paris Agreement,4,0.75,0.230769
+climate change policy and the Paris Agreement,5,0.8,0.307692
+climate change policy and the Paris Agreement,6,0.833333,0.384615
+climate change policy and the Paris Agreement,7,0.857143,0.461538
+climate change policy and the Paris Agreement,8,0.875,0.538462
+climate change policy and the Paris Agreement,9,0.888889,0.615385
+climate change policy and the Paris Agreement,10,0.9,0.692308
+climate change policy and the Paris Agreement,11,0.909091,0.769231
+climate change policy and the Paris Agreement,12,0.833333,0.769231
+climate change policy and the Paris Agreement,13,0.846154,0.846154
+climate change policy and the Paris Agreement,14,0.857143,0.923077
+climate change policy and the Paris Agreement,15,0.8,0.923077
+climate change policy and the Paris Agreement,16,0.8,0.923077
+climate change policy and the Paris Agreement,17,0.8125,1.0
+climate change policy and the Paris Agreement,18,0.8125,1.0
+climate change policy and the Paris Agreement,19,0.764706,1.0
+climate change policy and the Paris Agreement,20,0.764706,1.0
+cryptocurrency Bitcoin surge and institutional adoption,1,1.0,0.142857
+cryptocurrency Bitcoin surge and institutional adoption,2,0.5,0.142857
+cryptocurrency Bitcoin surge and institutional adoption,3,0.666667,0.285714
+cryptocurrency Bitcoin surge and institutional adoption,4,0.75,0.428571
+cryptocurrency Bitcoin surge and institutional adoption,5,0.8,0.571429
+cryptocurrency Bitcoin surge and institutional adoption,6,0.666667,0.571429
+cryptocurrency Bitcoin surge and institutional adoption,7,0.714286,0.714286
+cryptocurrency Bitcoin surge and institutional adoption,8,0.625,0.714286
+cryptocurrency Bitcoin surge and institutional adoption,9,0.555556,0.714286
+cryptocurrency Bitcoin surge and institutional adoption,10,0.6,0.857143
+cryptocurrency Bitcoin surge and institutional adoption,11,0.545455,0.857143
+cryptocurrency Bitcoin surge and institutional adoption,12,0.583333,1.0
+privacy concerns and surveillance capitalism,1,1.0,0.1
+privacy concerns and surveillance capitalism,2,1.0,0.2
+privacy concerns and surveillance capitalism,3,1.0,0.3
+privacy concerns and surveillance capitalism,4,1.0,0.4
+privacy concerns and surveillance capitalism,5,0.8,0.4
+privacy concerns and surveillance capitalism,6,0.833333,0.5
+privacy concerns and surveillance capitalism,7,0.857143,0.6
+privacy concerns and surveillance capitalism,8,0.75,0.6
+privacy concerns and surveillance capitalism,9,0.666667,0.6
+privacy concerns and surveillance capitalism,10,0.7,0.7
+privacy concerns and surveillance capitalism,11,0.636364,0.7
+privacy concerns and surveillance capitalism,12,0.583333,0.7
+privacy concerns and surveillance capitalism,13,0.615385,0.8
+privacy concerns and surveillance capitalism,14,0.642857,0.9
+privacy concerns and surveillance capitalism,15,0.6,0.9
+privacy concerns and surveillance capitalism,16,0.625,1.0
+privacy concerns and surveillance capitalism,17,0.588235,1.0
+privacy concerns and surveillance capitalism,18,0.555556,1.0
+social media addiction and its effects on teenagers,1,1.0,0.333333
+social media addiction and its effects on teenagers,2,1.0,0.666667
+social media addiction and its effects on teenagers,3,0.666667,0.666667
+social media addiction and its effects on teenagers,4,0.75,1.0
+Netflix binge watching and the streaming wars,1,1.0,0.111111
+Netflix binge watching and the streaming wars,2,0.5,0.111111
+Netflix binge watching and the streaming wars,3,0.666667,0.222222
+Netflix binge watching and the streaming wars,4,0.75,0.333333
+Netflix binge watching and the streaming wars,5,0.6,0.333333
+Netflix binge watching and the streaming wars,6,0.666667,0.444444
+Netflix binge watching and the streaming wars,7,0.714286,0.555556
+Netflix binge watching and the streaming wars,8,0.75,0.666667
+Netflix binge watching and the streaming wars,9,0.777778,0.777778
+Netflix binge watching and the streaming wars,10,0.8,0.888889
+Netflix binge watching and the streaming wars,11,0.727273,0.888889
+Netflix binge watching and the streaming wars,12,0.666667,0.888889
+Netflix binge watching and the streaming wars,13,0.692308,1.0
+Olympics postponement and athlete mental health,1,0.0,0.0
+Olympics postponement and athlete mental health,2,0.5,1.0
+Olympics postponement and athlete mental health,3,0.333333,1.0
+Olympics postponement and athlete mental health,4,0.25,1.0
+5G technology rollout and conspiracy theories,1,1.0,0.25
+5G technology rollout and conspiracy theories,2,1.0,0.5
+5G technology rollout and conspiracy theories,3,1.0,0.5
+5G technology rollout and conspiracy theories,4,1.0,0.5
+5G technology rollout and conspiracy theories,5,1.0,0.5
+5G technology rollout and conspiracy theories,6,1.0,0.75
+5G technology rollout and conspiracy theories,7,1.0,0.75
+5G technology rollout and conspiracy theories,8,1.0,0.75
+5G technology rollout and conspiracy theories,9,1.0,1.0
+5G technology rollout and conspiracy theories,10,1.0,1.0
+SpaceX Falcon 9 and commercial space travel,1,0.0,0.0
+SpaceX Falcon 9 and commercial space travel,2,0.5,0.2
+SpaceX Falcon 9 and commercial space travel,3,0.666667,0.4
+SpaceX Falcon 9 and commercial space travel,4,0.75,0.6
+SpaceX Falcon 9 and commercial space travel,5,0.8,0.8
+SpaceX Falcon 9 and commercial space travel,6,0.666667,0.8
+SpaceX Falcon 9 and commercial space travel,7,0.714286,1.0

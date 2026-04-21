@@ -1,0 +1,81 @@
+query,K,highlight_precision,highlight_recall,highlight_f1,avg_quality,n_evaluated
+COVID-19 pandemic response and lockdown measures,5,0.25,0.125,0.166667,1.2,20
+COVID-19 pandemic response and lockdown measures,10,0.375,0.375,0.375,1.2,20
+COVID-19 pandemic response and lockdown measures,15,0.384615,0.625,0.47619,1.266667,20
+COVID-19 pandemic response and lockdown measures,20,0.411765,0.875,0.56,1.35,20
+2020 US presidential election and voter turnout,5,1.0,0.416667,0.588235,2.2,19
+2020 US presidential election and voter turnout,10,1.0,0.666667,0.8,1.8,19
+2020 US presidential election and voter turnout,15,1.0,0.916667,0.956522,1.6,19
+2020 US presidential election and voter turnout,20,0.857143,1.0,0.923077,1.526316,19
+Black Lives Matter protests and racial justice,5,1.0,0.333333,0.5,2.2,18
+Black Lives Matter protests and racial justice,10,0.9,0.6,0.72,2.2,18
+Black Lives Matter protests and racial justice,15,0.8,0.8,0.8,2.2,18
+Black Lives Matter protests and racial justice,20,0.833333,1.0,0.909091,2.222222,18
+Trump impeachment trial and Senate acquittal,5,0.2,0.076923,0.111111,1.0,19
+Trump impeachment trial and Senate acquittal,10,0.5,0.384615,0.434783,1.8,19
+Trump impeachment trial and Senate acquittal,15,0.571429,0.615385,0.592593,1.866667,19
+Trump impeachment trial and Senate acquittal,20,0.666667,0.923077,0.774194,1.947368,19
+Hong Kong protests and China national security law,5,1.0,0.384615,0.555556,2.6,19
+Hong Kong protests and China national security law,10,0.8,0.615385,0.695652,2.1,19
+Hong Kong protests and China national security law,15,0.733333,0.846154,0.785714,1.933333,19
+Hong Kong protests and China national security law,20,0.684211,1.0,0.8125,1.842105,19
+Brexit negotiations and the UK leaving the EU,5,0.8,0.266667,0.4,1.8,20
+Brexit negotiations and the UK leaving the EU,10,0.8,0.533333,0.64,2.0,20
+Brexit negotiations and the UK leaving the EU,15,0.733333,0.733333,0.733333,1.933333,20
+Brexit negotiations and the UK leaving the EU,20,0.75,1.0,0.857143,1.9,20
+mental health during quarantine and isolation,5,0.25,0.2,0.222222,0.8,15
+mental health during quarantine and isolation,10,0.333333,0.4,0.363636,0.7,15
+mental health during quarantine and isolation,15,0.555556,1.0,0.714286,0.866667,15
+mental health during quarantine and isolation,20,0.555556,1.0,0.714286,0.866667,15
+remote work and the future of the office,5,0.6,0.1875,0.285714,1.6,20
+remote work and the future of the office,10,0.7,0.4375,0.538462,1.8,20
+remote work and the future of the office,15,0.8,0.75,0.774194,2.0,20
+remote work and the future of the office,20,0.789474,0.9375,0.857143,1.95,20
+stock market crash and economic recession 2020,5,1.0,1.0,1.0,2.0,2
+stock market crash and economic recession 2020,10,1.0,1.0,1.0,2.0,2
+stock market crash and economic recession 2020,15,1.0,1.0,1.0,2.0,2
+stock market crash and economic recession 2020,20,1.0,1.0,1.0,2.0,2
+wildfires in Australia and California 2020,5,0.666667,1.0,0.8,1.75,4
+wildfires in Australia and California 2020,10,0.666667,1.0,0.8,1.75,4
+wildfires in Australia and California 2020,15,0.666667,1.0,0.8,1.75,4
+wildfires in Australia and California 2020,20,0.666667,1.0,0.8,1.75,4
+artificial intelligence and machine learning breakthroughs,5,1.0,0.416667,0.588235,2.2,14
+artificial intelligence and machine learning breakthroughs,10,0.9,0.75,0.818182,2.1,14
+artificial intelligence and machine learning breakthroughs,15,0.857143,1.0,0.923077,2.0,14
+artificial intelligence and machine learning breakthroughs,20,0.857143,1.0,0.923077,2.0,14
+mRNA vaccines and the future of medicine,5,0.0,0.0,0.0,0.0,5
+mRNA vaccines and the future of medicine,10,0.0,0.0,0.0,0.0,5
+mRNA vaccines and the future of medicine,15,0.0,0.0,0.0,0.0,5
+mRNA vaccines and the future of medicine,20,0.0,0.0,0.0,0.0,5
+climate change policy and the Paris Agreement,5,0.8,0.307692,0.444444,2.2,20
+climate change policy and the Paris Agreement,10,0.9,0.692308,0.782609,2.1,20
+climate change policy and the Paris Agreement,15,0.8,0.923077,0.857143,1.933333,20
+climate change policy and the Paris Agreement,20,0.764706,1.0,0.866667,1.6,20
+cryptocurrency Bitcoin surge and institutional adoption,5,0.8,0.571429,0.666667,2.0,12
+cryptocurrency Bitcoin surge and institutional adoption,10,0.6,0.857143,0.705882,1.5,12
+cryptocurrency Bitcoin surge and institutional adoption,15,0.583333,1.0,0.736842,1.5,12
+cryptocurrency Bitcoin surge and institutional adoption,20,0.583333,1.0,0.736842,1.5,12
+privacy concerns and surveillance capitalism,5,0.8,0.4,0.533333,1.8,18
+privacy concerns and surveillance capitalism,10,0.7,0.7,0.7,1.8,18
+privacy concerns and surveillance capitalism,15,0.6,0.9,0.72,1.666667,18
+privacy concerns and surveillance capitalism,20,0.555556,1.0,0.714286,1.555556,18
+social media addiction and its effects on teenagers,5,0.75,1.0,0.857143,1.75,4
+social media addiction and its effects on teenagers,10,0.75,1.0,0.857143,1.75,4
+social media addiction and its effects on teenagers,15,0.75,1.0,0.857143,1.75,4
+social media addiction and its effects on teenagers,20,0.75,1.0,0.857143,1.75,4
+Netflix binge watching and the streaming wars,5,0.6,0.333333,0.428571,1.8,13
+Netflix binge watching and the streaming wars,10,0.8,0.888889,0.842105,2.0,13
+Netflix binge watching and the streaming wars,15,0.692308,1.0,0.818182,1.769231,13
+Netflix binge watching and the streaming wars,20,0.692308,1.0,0.818182,1.769231,13
+Olympics postponement and athlete mental health,5,0.25,1.0,0.4,0.5,4
+Olympics postponement and athlete mental health,10,0.25,1.0,0.4,0.5,4
+Olympics postponement and athlete mental health,15,0.25,1.0,0.4,0.5,4
+Olympics postponement and athlete mental health,20,0.25,1.0,0.4,0.5,4
+5G technology rollout and conspiracy theories,5,1.0,0.5,0.666667,1.0,10
+5G technology rollout and conspiracy theories,10,1.0,1.0,1.0,1.1,10
+5G technology rollout and conspiracy theories,15,1.0,1.0,1.0,1.1,10
+5G technology rollout and conspiracy theories,20,1.0,1.0,1.0,1.1,10
+SpaceX Falcon 9 and commercial space travel,5,0.8,0.8,0.8,1.8,7
+SpaceX Falcon 9 and commercial space travel,10,0.714286,1.0,0.833333,1.714286,7
+SpaceX Falcon 9 and commercial space travel,15,0.714286,1.0,0.833333,1.714286,7
+SpaceX Falcon 9 and commercial space travel,20,0.714286,1.0,0.833333,1.714286,7

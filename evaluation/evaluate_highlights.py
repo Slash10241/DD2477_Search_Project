@@ -32,13 +32,16 @@ from typing import Any
 import matplotlib.pyplot as plt
 import numpy as np
 from google import genai
+from dotenv import load_dotenv
+
 
 from evaluate_metrics import K_VALUES
 
+load_dotenv()
 
-QUERY_RESULTS_FILE = "query_results.txt"
-QUALITY_ANNOTATED_FILE = "annotated_highlight_quality.txt"
-RESULTS_DIR = "results"
+QUERY_RESULTS_FILE = "query_outputs/query_results_hybrid.txt"
+QUALITY_ANNOTATED_FILE = "query_outputs/annotated_highlight_quality.txt"
+RESULTS_DIR = "results_highlights"
 
 PREDICTIONS_FILE = f"{RESULTS_DIR}/highlight_predictions.json"
 ANNOTATION_INPUT_FILE = f"{RESULTS_DIR}/highlight_annotation_input.txt"
@@ -48,83 +51,118 @@ PER_QUERY_METRICS_PATH = f"{RESULTS_DIR}/highlight_metrics_per_query.csv"
 AVERAGED_METRICS_PATH = f"{RESULTS_DIR}/highlight_metrics_averaged.csv"
 PR_CURVE_PATH = f"{RESULTS_DIR}/highlight_pr_curve_per_query.csv"
 
-DEFAULT_MODEL = "gemini-2.5-flash-lite"
+# DEFAULT_MODEL = "gemini-2.5-flash-lite"
+DEFAULT_MODEL = 'gemini-3.1-flash-lite-preview'
+
 DEFAULT_BATCH_SIZE = 5
 QUALITY_POSITIVE_THRESHOLD = 2
 
-
 def parse_query_results(filepath: str) -> dict[str, list[dict[str, Any]]]:
+    """
+    Parses the query_results_{mode}.txt format produced by getRankingswithRel.py.
+
+    Expected structure:
+        QUERY: <query text>
+        RESULTS FOUND: <N>
+        ----------------------------------------
+        [1]
+        Relevance: X/3
+        Podcast  : <show>
+        Episode  : <episode>
+        Content  : <text>
+        Time     : HH:MM:SS – HH:MM:SS
+
+        [2]
+        ...
+        ============================================================
+    """
     lines = Path(filepath).read_text(encoding="utf-8").splitlines()
     data: dict[str, list[dict[str, Any]]] = {}
+    current_query: str | None = None
+    current_results: list[dict[str, Any]] = []
 
     i = 0
     while i < len(lines):
-        query = lines[i].strip()
-        if not query:
+        line = lines[i].strip()
+
+        # ── New query block ───────────────────────────────────────────────────
+        if line.startswith("QUERY:"):
+            if current_query is not None:
+                data[current_query] = current_results
+            current_query   = line[len("QUERY:"):].strip()
+            current_results = []
             i += 1
             continue
 
-        if i + 1 >= len(lines) or not re.fullmatch(r"\d+", lines[i + 1].strip()):
+        # ── Skip structural lines ─────────────────────────────────────────────
+        if (
+            line.startswith("RESULTS FOUND:")
+            or line.startswith("-" * 10)
+            or line.startswith("=" * 10)
+            or not line
+        ):
             i += 1
             continue
 
-        i += 2
-        results: list[dict[str, Any]] = []
-
-        while i < len(lines):
-            line = lines[i].strip()
-            if not line:
-                i += 1
-                continue
-
-            if not re.fullmatch(r"\[\d+\]", line):
-                if i + 1 < len(lines) and re.fullmatch(r"\d+", lines[i + 1].strip()):
-                    break
-                i += 1
-                continue
-
+        # ── Result block: [rank] ──────────────────────────────────────────────
+        if re.fullmatch(r"\[\d+\]", line):
             rank = int(line.strip("[]"))
-            podcast_line = lines[i + 1].strip() if i + 1 < len(lines) else ""
-            episode_line = lines[i + 2].strip() if i + 2 < len(lines) else ""
-            content_line = lines[i + 3].strip() if i + 3 < len(lines) else ""
-            time_line = lines[i + 4].strip() if i + 4 < len(lines) else ""
+            relevance: int | None = None
+            show = episode = text = time = ""
 
-            show = (
-                podcast_line.split("Podcast :", 1)[-1].strip()
-                if "Podcast :" in podcast_line
-                else podcast_line
-            )
-            episode = (
-                episode_line.split("Episode :", 1)[-1].strip()
-                if "Episode :" in episode_line
-                else episode_line
-            )
-            text = (
-                content_line.split("Content :", 1)[-1].strip()
-                if "Content :" in content_line
-                else content_line
-            )
-            time = (
-                time_line.split("Time    :", 1)[-1].strip()
-                if "Time    :" in time_line
-                else time_line
-            )
+            i += 1
+            while i < len(lines):
+                inner = lines[i].strip()
 
-            results.append(
+                if re.fullmatch(r"\[\d+\]", inner) or inner.startswith("QUERY:"):
+                    break  # next result or next query — don't consume the line
+
+                if inner.startswith("Relevance:"):
+                    m = re.search(r"(\d+)/3", inner)
+                    relevance = int(m.group(1)) if m else None
+
+                elif re.match(r"^Podcast\s*:", inner):
+                    show = re.sub(r"^Podcast\s*:\s*", "", inner).strip()
+
+                elif re.match(r"^Episode\s*:", inner):
+                    episode = re.sub(r"^Episode\s*:\s*", "", inner).strip()
+
+                elif re.match(r"^Content\s*:", inner):
+                    text = re.sub(r"^Content\s*:\s*", "", inner).strip()
+
+                elif re.match(r"^Time\s*:", inner):
+                    time = re.sub(r"^Time\s*:\s*", "", inner).strip()
+
+                elif (
+                    inner.startswith("RESULTS FOUND:")
+                    or inner.startswith("-" * 10)
+                    or inner.startswith("=" * 10)
+                    or not inner
+                ):
+                    pass  # separator lines, skip
+
+                i += 1
+
+            current_results.append(
                 {
-                    "rank": rank,
-                    "show": show,
-                    "episode": episode,
-                    "text": text,
-                    "time": time,
+                    "rank":      rank,
+                    "relevance": relevance,
+                    "show":      show,
+                    "episode":   episode,
+                    "text":      text,
+                    "time":      time,
                 }
             )
-            i += 5
+            continue  # i already advanced inside the inner loop
 
-        data[query] = results
+        i += 1
+
+    # Save the last query
+    if current_query is not None:
+        data[current_query] = current_results
 
     return data
-
+    
 
 def parse_annotated_highlight_quality(
     filepath: str, known_queries: set[str]
@@ -186,7 +224,7 @@ def parse_annotated_highlight_quality(
 
 
 def _api_key() -> str:
-    key = os.environ.get("GEMINI_API_KEY", "").strip()
+    key = os.getenv("GEMINI_API_KEY", "")
     if not key:
         raise RuntimeError("GEMINI_API_KEY is not configured.")
     return key
