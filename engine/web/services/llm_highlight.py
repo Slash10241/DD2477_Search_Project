@@ -1,21 +1,18 @@
-from __future__ import annotations
-
 import html
 import logging
-import os
 from typing import Sequence
 
-from django.conf import settings
 from google import genai
 from pydantic import BaseModel, Field, ValidationError
 
 from .elastic_utils import SearchResultWithOptionalMetadata, LLMEnrichedSearchResult
+from .llm_utils import get_client, get_model_name
 
 import difflib
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_MODEL = "gemini-2.5-flash-lite"
+
 DEFAULT_BATCH_SIZE = 5
 
 
@@ -25,21 +22,6 @@ class HighlightItem(BaseModel):
 
 class HighlightResponse(BaseModel):
     highlights: list[HighlightItem] = Field(default_factory=list)
-
-
-def _get_api_key() -> str:
-    api_key = getattr(settings, "GEMINI_API_KEY", "") or os.environ.get("GEMINI_API_KEY", "")
-    if not api_key:
-        raise RuntimeError("GEMINI_API_KEY is not configured.")
-    return api_key
-
-
-def _get_model_name() -> str:
-    return getattr(settings, "GEMINI_MODEL", DEFAULT_MODEL) or DEFAULT_MODEL
-
-
-def _get_client() -> genai.Client:
-    return genai.Client(api_key=_get_api_key())
 
 
 def fuzzy_find(text: str, quote: str):
@@ -215,8 +197,8 @@ def highlight_results_in_batches(
     if not query_text.strip() or not results:
         return [_to_llm_enriched_result(r) for r in results]
 
-    client = _get_client()
-    model_name = _get_model_name()
+    client = get_client()
+    model_name = get_model_name()
     logger.warning("Gemini highlight model in use: %s", model_name)
 
     res: list[LLMEnrichedSearchResult] = []

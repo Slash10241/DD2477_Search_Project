@@ -1,17 +1,53 @@
-from __future__ import annotations
-
 import os
-from copy import deepcopy
 from math import log2
-from typing import Sequence
+from typing import Sequence, TypedDict
 
 from django.conf import settings
 from google import genai
 from pydantic import BaseModel, Field, ValidationError
 
 from .elastic_utils import SearchResult
+from .llm_utils import get_api_key
 
 DEFAULT_FEEDBACK_MODEL = "gemini-3.1-flash-lite-preview"
+
+DEFAULT_BATCH_SIZE = 10
+
+
+def _get_feedback_model_name() -> str:
+    return (
+        getattr(settings, "GEMINI_FEEDBACK_MODEL", "")
+        or os.environ.get("GEMINI_FEEDBACK_MODEL", "")
+        or DEFAULT_FEEDBACK_MODEL
+    )
+
+class OverallMetricScores(TypedDict):
+    precision_at_k: float
+    mrr: float
+    ndcg_at_k: float
+
+class SearchResultWithScore(SearchResult):
+    feedback_relevance: int
+
+class ScoringResults(TypedDict):
+    results: list[SearchResultWithScore]
+    metrics: OverallMetricScores
+
+
+def _to_scored_result(result: SearchResult, feedback_relevance: int) -> SearchResultWithScore:
+    scored_result: SearchResultWithScore = {
+        "score": result["score"],
+        "source": result["source"],
+        "feedback_relevance": feedback_relevance,
+    }
+
+    if "show_name" in result:
+        scored_result["show_name"] = result["show_name"]
+
+    if "episode_name" in result:
+        scored_result["episode_name"] = result["episode_name"]
+
+    return scored_result
 
 
 class FeedbackItem(BaseModel):
@@ -23,23 +59,8 @@ class FeedbackResponse(BaseModel):
     feedback: list[FeedbackItem] = Field(default_factory=list)
 
 
-def _get_api_key() -> str:
-    api_key = getattr(settings, "GEMINI_API_KEY", "") or os.environ.get("GEMINI_API_KEY", "")
-    if not api_key:
-        raise RuntimeError("GEMINI_API_KEY is not configured.")
-    return api_key
-
-
-def _get_model_name() -> str:
-    return (
-        getattr(settings, "GEMINI_FEEDBACK_MODEL", "")
-        or os.environ.get("GEMINI_FEEDBACK_MODEL", "")
-        or DEFAULT_FEEDBACK_MODEL
-    )
-
-
 def _get_client() -> genai.Client:
-    return genai.Client(api_key=_get_api_key())
+    return genai.Client(api_key=get_api_key())
 
 
 def _build_prompt(query_text: str, results: Sequence[SearchResult]) -> str:
@@ -76,18 +97,18 @@ def _build_prompt(query_text: str, results: Sequence[SearchResult]) -> str:
 
     return "\n".join(lines)
 
-
-DEFAULT_BATCH_SIZE = 10
-
-
 def score_results(
     query_text: str,
-    results: Sequence[SearchResult],
+    results: list[SearchResult],
     batch_size: int = DEFAULT_BATCH_SIZE,
-) -> dict:
+) -> ScoringResults:
+    scored_results: list[SearchResultWithScore] = [
+        _to_scored_result(result, 0) for result in results
+    ]
+
     if not query_text.strip() or not results:
         return {
-            "results": list(results),
+            "results": scored_results,
             "metrics": {
                 "precision_at_k": 0.0,
                 "mrr": 0.0,
@@ -96,9 +117,8 @@ def score_results(
         }
 
     client = _get_client()
-    model_name = _get_model_name()
+    model_name = _get_feedback_model_name()
 
-    scored_results = [deepcopy(result) for result in results]
     labels: list[int] = []
 
     for i in range(0, len(scored_results), batch_size):
@@ -130,7 +150,7 @@ def score_results(
 
         for local_idx, result in enumerate(batch):
             relevance = relevance_map.get(local_idx, 0)
-            result["feedback_relevance"] = relevance  # type: ignore
+            result["feedback_relevance"] = relevance
             labels.append(relevance)
 
     return {
@@ -138,7 +158,7 @@ def score_results(
         "metrics": _compute_metrics(labels),
     }
 
-def _compute_metrics(labels: list[int]) -> dict[str, float]:
+def _compute_metrics(labels: list[int]) -> OverallMetricScores:
     if not labels:
         return {
             "precision_at_k": 0.0,

@@ -7,7 +7,6 @@ from django.shortcuts import render
 from django.http import HttpRequest, JsonResponse
 from django.views.decorators.http import require_GET, require_POST
 from django.views.decorators.csrf import ensure_csrf_cookie
-from django.conf import settings
 
 from .services.elastic_utils import SearchResultWithOptionalMetadata
 from .services.hybrid_search import hybrid_search
@@ -16,7 +15,8 @@ from .services.metadata_lookup import enrich_results_with_metadata
 from .services.vector_search import vector_search
 from .services.llm_highlight import highlight_results_in_batches
 from .services.llm_feedback import score_results
-from .services.llm_summary import _get_client, generate_summary
+from .services.llm_summary import generate_summary
+from .services.llm_rag import generate_rag_answer
 
 class SearchMode(str, Enum):
     LEXICAL = "lexical"
@@ -30,53 +30,6 @@ SEARCH_EXECUTORS: dict[SearchMode, Callable[[str], list[SearchResultWithOptional
     SearchMode.VECTOR: lambda query: vector_search(query, num_candidates=100),
     SearchMode.HYBRID: lambda query: hybrid_search(query, num_candidates=100),
 }
-
-
-def _generate_rag_answer(user_question: str, query: str, results: list) -> str:
-    client = _get_client()
-    model_name = settings.GEMINI_MODEL
-
-    context_blocks = []
-    for idx, item in enumerate(results, start=1):
-        show_name = item.get("show_name") or item["source"].get("show_filename_prefix", "")
-        episode_name = item.get("episode_name") or item["source"].get("episode_filename_prefix", "")
-        text = item["source"].get("text", "")
-
-        context_blocks.append(
-            f"Result {idx}\n"
-            f"Show: {show_name}\n"
-            f"Episode: {episode_name}\n"
-            f"Text:\n{text}"
-        )
-
-    context = "\n\n".join(context_blocks)
-
-    prompt = f"""
-You are answering a user question using retrieved podcast transcript chunks as context.
-
-Original retrieval query:
-{query}
-
-User question:
-{user_question}
-
-Instructions:
-- Answer only using the provided context
-- Do not invent information
-- If the context is insufficient, say so clearly
-- Combine information across chunks when useful
-- Be concise but informative
-
-Context:
-{context}
-"""
-
-    response = client.models.generate_content(
-        model=model_name,
-        contents=prompt,
-    )
-
-    return (response.text or "").strip()
 
 
 def parse_search_mode(raw_mode: str | None) -> SearchMode:
@@ -271,8 +224,7 @@ def ask_results(request: HttpRequest):
 
     try:
         results = _run_search_pipeline(q, mode, top_k)
-
-        answer = _generate_rag_answer(
+        answer = generate_rag_answer(
             user_question=ask_query,
             query=q,
             results=results,

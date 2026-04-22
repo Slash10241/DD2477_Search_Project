@@ -1,12 +1,9 @@
-from google import genai
 from django.conf import settings
-import os
 
-def _get_client():
-    return genai.Client(api_key=settings.GEMINI_API_KEY or os.environ.get("GEMINI_API_KEY"))
+from .llm_utils import get_client
 
 def generate_summary(query: str, results: list) -> str:
-    client = _get_client()
+    client = get_client()
 
     texts = [r["source"]["text"] for r in results]
 
