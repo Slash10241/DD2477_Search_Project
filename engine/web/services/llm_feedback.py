@@ -168,7 +168,7 @@ def _compute_metrics(labels: list[int]) -> OverallMetricScores:
 
     k = len(labels)
 
-    binary_labels = [1 if label > 0 else 0 for label in labels]
+    binary_labels = [1 if label >= 2 else 0 for label in labels]
     precision_at_k = sum(binary_labels) / k
 
     mrr = 0.0
