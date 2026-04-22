@@ -24,6 +24,46 @@ function escapeHtml(value) {
 		.replaceAll("'", "&#39;");
 }
 
+function showLlmNotice(message) {
+	const notice = document.querySelector("[data-llm-notice]");
+	if (!notice) {
+		return;
+	}
+
+	notice.textContent = message;
+	notice.classList.remove("is-hidden");
+}
+
+function clearLlmNotice() {
+	const notice = document.querySelector("[data-llm-notice]");
+	if (!notice) {
+		return;
+	}
+
+	notice.textContent = "";
+	notice.classList.add("is-hidden");
+}
+
+function showSummaryNotice(message) {
+	const notice = document.querySelector("[data-summary-notice]");
+	if (!notice) {
+		return;
+	}
+
+	notice.textContent = message;
+	notice.classList.remove("is-hidden");
+}
+
+function clearSummaryNotice() {
+	const notice = document.querySelector("[data-summary-notice]");
+	if (!notice) {
+		return;
+	}
+
+	notice.textContent = "";
+	notice.classList.add("is-hidden");
+}
+
 function renderHighlightedResults(results) {
 	const cards = document.querySelectorAll(".result-card");
 
@@ -46,14 +86,13 @@ let latestFeedbackState = null;
 
 function getFeedbackLabel(score) {
 	switch (score) {
-		case 0:
-			return "0 · Not relevant";
 		case 1:
 			return "1 · Mentioned";
 		case 2:
 			return "2 · Some detail";
 		case 3:
 			return "3 · Exhaustive";
+		case 0:
 		default:
 			return "0 · Not relevant";
 	}
@@ -69,10 +108,34 @@ function renderFeedbackResults(results) {
 		const pill = card.querySelector("[data-feedback-pill]");
 		if (!pill) return;
 
-		const relevance = Number(result.feedback_relevance ?? 0);
-		pill.hidden = false;
-		pill.textContent = getFeedbackLabel(relevance);
+		const label = pill.querySelector("[data-feedback-label]");
+		const hasFeedback = Object.prototype.hasOwnProperty.call(result, "feedback_relevance");
+		if (!hasFeedback) {
+			pill.classList.add("is-hidden");
+			pill.removeAttribute("data-feedback-score");
+			pill.removeAttribute("aria-label");
+			if (label) label.textContent = "";
+			return;
+		}
+
+		const relevance = Number(result.feedback_relevance);
+		if (Number.isNaN(relevance)) {
+			pill.classList.add("is-hidden");
+			pill.removeAttribute("data-feedback-score");
+			pill.removeAttribute("aria-label");
+			if (label) label.textContent = "";
+			return;
+		}
+
+		const feedbackText = getFeedbackLabel(relevance);
+		pill.classList.remove("is-hidden");
+		if (label) {
+			label.textContent = feedbackText;
+		} else {
+			pill.textContent = feedbackText;
+		}
 		pill.setAttribute("data-feedback-score", String(relevance));
+		pill.setAttribute("aria-label", `Relevance ${feedbackText}`);
 	});
 }
 
@@ -88,7 +151,7 @@ function renderFeedbackMetrics(metrics) {
 	if (mrrEl) mrrEl.textContent = Number(metrics.mrr ?? 0).toFixed(4);
 	if (ndcgEl) ndcgEl.textContent = Number(metrics.ndcg_at_k ?? 0).toFixed(4);
 
-	shell.hidden = false;
+	shell.classList.remove("is-hidden");
 }
 
 
@@ -218,6 +281,71 @@ document.addEventListener("DOMContentLoaded", () => {
 		}
 	}
 
+	const kPickers = document.querySelectorAll("[data-k-picker]");
+	if (kPickers.length) {
+		kPickers.forEach((kPicker) => {
+			const trigger = kPicker.querySelector("[data-k-trigger]");
+			const menu = kPicker.querySelector("[data-k-menu]");
+			const label = kPicker.querySelector("[data-k-label]");
+			const hiddenInput = kPicker.querySelector("input[type='hidden']");
+
+			if (!trigger || !menu || !label || !hiddenInput) {
+				return;
+			}
+
+			const closeMenu = () => {
+				kPicker.classList.remove("is-open");
+				trigger.setAttribute("aria-expanded", "false");
+			};
+
+			const openMenu = () => {
+				kPicker.classList.add("is-open");
+				trigger.setAttribute("aria-expanded", "true");
+			};
+
+			trigger.addEventListener("click", () => {
+				if (kPicker.classList.contains("is-open")) {
+					closeMenu();
+				} else {
+					openMenu();
+				}
+			});
+
+			menu.addEventListener("click", (event) => {
+				const target = event.target instanceof Element ? event.target.closest("[data-k-option]") : null;
+				if (!target) {
+					return;
+				}
+
+				const value = target.getAttribute("data-k-option");
+				if (!value) {
+					return;
+				}
+
+				hiddenInput.value = value;
+				label.textContent = target.querySelector(".mode-picker-option-title")?.textContent ?? `Top ${value}`;
+
+				menu.querySelectorAll("[data-k-option]").forEach((option) => {
+					option.classList.toggle("is-active", option.getAttribute("data-k-option") === value);
+				});
+
+				closeMenu();
+			});
+
+			document.addEventListener("click", (event) => {
+				if (!kPicker.contains(event.target)) {
+					closeMenu();
+				}
+			});
+
+			document.addEventListener("keydown", (event) => {
+				if (event.key === "Escape") {
+					closeMenu();
+				}
+			});
+		});
+	}
+
 	document.addEventListener("click", (event) => {
 		const toggle = event.target instanceof Element ? event.target.closest("[data-result-expand-button]") : null;
 		if (!toggle) {
@@ -303,14 +431,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
 		const queryInput = document.querySelector("input[name='q']");
 		const modeInput = document.querySelector("#mode-input");
-		const topKSelect = document.querySelector("#llm-highlight-k");
+		const topKInput = document.querySelector("#llm-highlight-k");
 
 		const q = queryInput instanceof HTMLInputElement ? queryInput.value.trim() : "";
 		const mode = modeInput instanceof HTMLInputElement ? modeInput.value : "lexical";
-		const topK = topKSelect instanceof HTMLSelectElement ? Number(topKSelect.value) : 10;
+		const topK = topKInput instanceof HTMLInputElement ? Number(topKInput.value) : 10;
+
+		clearLlmNotice();
 
 		if (!q) {
-			window.alert("Please enter a search query first.");
+			showLlmNotice("Please enter a search query first.");
 			return;
 		}
 
@@ -341,7 +471,7 @@ document.addEventListener("DOMContentLoaded", () => {
 			renderHighlightedResults(data.results || []);
 		} catch (error) {
 			console.error(error);
-			window.alert(error instanceof Error ? error.message : "Highlight extraction failed.");
+			showLlmNotice(error instanceof Error ? error.message : "Highlight extraction failed.");
 		} finally {
 			highlightButton.removeAttribute("disabled");
 			highlightButton.textContent = originalText || "Extract Highlights";
@@ -358,10 +488,19 @@ document.addEventListener("DOMContentLoaded", () => {
 // });
 
 document.addEventListener("click", async (event) => {
-  const btn = event.target.closest("[data-summary-llm]");
+	const btn = event.target instanceof Element ? event.target.closest("[data-summary-llm]") : null;
   if (!btn) return;
 
-  console.log("Summarize clicked");
+	const loading = document.querySelector("[data-summary-loading]");
+	const summaryText = document.querySelector(".results-summary-text");
+	const originalText = btn.textContent;
+	clearSummaryNotice();
+
+	btn.setAttribute("disabled", "true");
+	btn.textContent = "Summarizing...";
+	if (loading) {
+		loading.classList.remove("is-hidden");
+	}
 
   const q = new URLSearchParams(window.location.search).get("q");
   const mode = new URLSearchParams(window.location.search).get("mode") || "lexical";
@@ -382,13 +521,19 @@ document.addEventListener("click", async (event) => {
       throw new Error(data.error || "Summary failed");
     }
 
-    if (data.summary) {
-      document.querySelector(".results-summary-text").textContent = data.summary;
+		if (data.summary && summaryText) {
+			summaryText.textContent = data.summary;
     }
 
   } catch (err) {
     console.error(err);
-    alert(err.message);
+		showSummaryNotice(err instanceof Error ? err.message : "Summary failed");
+	} finally {
+		if (loading) {
+			loading.classList.add("is-hidden");
+		}
+		btn.removeAttribute("disabled");
+		btn.textContent = originalText || "Summarize";
   }
 });
 
@@ -404,14 +549,16 @@ document.addEventListener("click", async (event) => {
 
 	const queryInput = document.querySelector("input[name='q']");
 	const modeInput = document.querySelector("#mode-input");
-	const topKSelect = document.querySelector("#llm-feedback-k");
+	const topKInput = document.querySelector("#llm-feedback-k");
 
 	const q = queryInput instanceof HTMLInputElement ? queryInput.value.trim() : "";
 	const mode = modeInput instanceof HTMLInputElement ? modeInput.value : "lexical";
-	const topK = topKSelect instanceof HTMLSelectElement ? Number(topKSelect.value) : 10;
+	const topK = topKInput instanceof HTMLInputElement ? Number(topKInput.value) : 10;
+
+	clearLlmNotice();
 
 	if (!q) {
-		window.alert("Please enter a search query first.");
+		showLlmNotice("Please enter a search query first.");
 		return;
 	}
 
@@ -451,7 +598,7 @@ document.addEventListener("click", async (event) => {
 		};
 	} catch (error) {
 		console.error(error);
-		window.alert(error instanceof Error ? error.message : "Feedback scoring failed.");
+		showLlmNotice(error instanceof Error ? error.message : "Feedback scoring failed.");
 	} finally {
 		feedbackButton.removeAttribute("disabled");
 		feedbackButton.textContent = originalText || "Score Results";
@@ -468,7 +615,7 @@ document.addEventListener("click", (event) => {
 	}
 
 	if (!latestFeedbackState) {
-		window.alert("Please score the results first.");
+		showLlmNotice("Please score the results first.");
 		return;
 	}
 
@@ -493,20 +640,22 @@ document.addEventListener("click", async (event) => {
 	const searchQueryInput = document.querySelector("input[name='q']");
 	const askQueryInput = document.querySelector("#llm-free-query");
 	const modeInput = document.querySelector("#mode-input");
-	const topKSelect = document.querySelector("#llm-top-k");
+	const topKInput = document.querySelector("#llm-top-k");
 
 	const q = searchQueryInput instanceof HTMLInputElement ? searchQueryInput.value.trim() : "";
 	const askQuery = askQueryInput instanceof HTMLTextAreaElement ? askQueryInput.value.trim() : "";
 	const mode = modeInput instanceof HTMLInputElement ? modeInput.value : "lexical";
-	const topK = topKSelect instanceof HTMLSelectElement ? Number(topKSelect.value) : 5;
+	const topK = topKInput instanceof HTMLInputElement ? Number(topKInput.value) : 5;
+
+	clearLlmNotice();
 
 	if (!q) {
-		window.alert("Please enter a search query first.");
+		showLlmNotice("Please enter a search query first.");
 		return;
 	}
 
 	if (!askQuery) {
-		window.alert("Please enter a question for the RAG query.");
+		showLlmNotice("Please enter a question for the RAG query.");
 		return;
 	}
 
@@ -538,7 +687,7 @@ try {
 	renderAskAnswer(data.answer || "No answer returned.");
 } catch (error) {
 	console.error(error);
-	renderAskAnswer(error instanceof Error ? error.message : "RAG query failed.");
+	showLlmNotice(error instanceof Error ? error.message : "RAG query failed.");
 } finally {
 	askButton.removeAttribute("disabled");
 	askButton.textContent = originalText || "Run RAG Query";

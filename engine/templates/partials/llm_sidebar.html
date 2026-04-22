@@ -22,7 +22,10 @@
         data-llm-sidebar-close
         aria-label="Close LLM sidebar"
       >
-        ×
+        <svg class="llm-sidebar-close-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+          <path d="M4 4L12 12"></path>
+          <path d="M12 4L4 12"></path>
+        </svg>
       </button>
     </div>
 
@@ -31,6 +34,8 @@
       <button type="button" class="llm-sidebar-mode" data-llm-mode="highlight">Highlight</button>
       <button type="button" class="llm-sidebar-mode" data-llm-mode="feedback">Feedback</button>
     </div>
+
+    <div class="llm-notice is-hidden" data-llm-notice role="status" aria-live="polite"></div>
 
     <div class="llm-sidebar-body">
     <section class="llm-section is-active" data-llm-section="ask">
@@ -44,11 +49,34 @@
 
       <div class="llm-inline-row">
         <label class="llm-small-label" for="llm-top-k">Use top-k</label>
-        <select id="llm-top-k" class="llm-select">
-          <option value="5" selected>Top 5</option>
-          <option value="10">Top 10</option>
-          <option value="20">Top 20</option>
-        </select>
+        <div class="mode-picker llm-k-picker" data-k-picker>
+          <input type="hidden" id="llm-top-k" value="5" />
+          <button
+            class="mode-picker-trigger"
+            type="button"
+            data-k-trigger
+            aria-haspopup="listbox"
+            aria-expanded="false"
+          >
+            <span class="mode-picker-text" data-k-label>Top 5</span>
+            <span class="mode-picker-chevron" aria-hidden="true"></span>
+          </button>
+
+          <div class="mode-picker-menu" role="listbox" aria-label="Top-k for ask mode" data-k-menu>
+            <button type="button" class="mode-picker-option is-active" data-k-option="5">
+              <span class="mode-picker-option-title">Top 5</span>
+              <span class="mode-picker-option-subtitle">Faster response</span>
+            </button>
+            <button type="button" class="mode-picker-option" data-k-option="10">
+              <span class="mode-picker-option-title">Top 10</span>
+              <span class="mode-picker-option-subtitle">Balanced context</span>
+            </button>
+            <button type="button" class="mode-picker-option" data-k-option="20">
+              <span class="mode-picker-option-title">Top 20</span>
+              <span class="mode-picker-option-subtitle">Maximum recall</span>
+            </button>
+          </div>
+        </div>
       </div>
 
       <button type="button" class="llm-action-button" data-llm-ask-button>
@@ -68,11 +96,34 @@
 
         <div class="llm-inline-row">
           <label class="llm-small-label" for="llm-highlight-k">Use top-k</label>
-          <select id="llm-highlight-k" class="llm-select">
-            <option value="5" selected>Top 5</option>
-            <option value="10">Top 10</option>
-            <option value="20">Top 20</option>
-          </select>
+          <div class="mode-picker llm-k-picker" data-k-picker>
+            <input type="hidden" id="llm-highlight-k" value="5" />
+            <button
+              class="mode-picker-trigger"
+              type="button"
+              data-k-trigger
+              aria-haspopup="listbox"
+              aria-expanded="false"
+            >
+              <span class="mode-picker-text" data-k-label>Top 5</span>
+              <span class="mode-picker-chevron" aria-hidden="true"></span>
+            </button>
+
+            <div class="mode-picker-menu" role="listbox" aria-label="Top-k for highlight mode" data-k-menu>
+              <button type="button" class="mode-picker-option is-active" data-k-option="5">
+                <span class="mode-picker-option-title">Top 5</span>
+                <span class="mode-picker-option-subtitle">Faster extraction</span>
+              </button>
+              <button type="button" class="mode-picker-option" data-k-option="10">
+                <span class="mode-picker-option-title">Top 10</span>
+                <span class="mode-picker-option-subtitle">Balanced context</span>
+              </button>
+              <button type="button" class="mode-picker-option" data-k-option="20">
+                <span class="mode-picker-option-title">Top 20</span>
+                <span class="mode-picker-option-subtitle">Maximum recall</span>
+              </button>
+            </div>
+          </div>
         </div>
 
         <button type="button" class="llm-action-button" data-llm-highlight-button>
@@ -87,10 +138,30 @@
 
         <div class="llm-inline-row">
           <label class="llm-small-label" for="llm-feedback-k">Use top-k</label>
-          <select id="llm-feedback-k" class="llm-select">
-            <option value="10" selected>Top 10</option>
-            <option value="20">Top 20</option>
-          </select>
+          <div class="mode-picker llm-k-picker" data-k-picker>
+            <input type="hidden" id="llm-feedback-k" value="10" />
+            <button
+              class="mode-picker-trigger"
+              type="button"
+              data-k-trigger
+              aria-haspopup="listbox"
+              aria-expanded="false"
+            >
+              <span class="mode-picker-text" data-k-label>Top 10</span>
+              <span class="mode-picker-chevron" aria-hidden="true"></span>
+            </button>
+
+            <div class="mode-picker-menu" role="listbox" aria-label="Top-k for feedback mode" data-k-menu>
+              <button type="button" class="mode-picker-option is-active" data-k-option="10">
+                <span class="mode-picker-option-title">Top 10</span>
+                <span class="mode-picker-option-subtitle">Balanced scoring</span>
+              </button>
+              <button type="button" class="mode-picker-option" data-k-option="20">
+                <span class="mode-picker-option-title">Top 20</span>
+                <span class="mode-picker-option-subtitle">Wider evaluation</span>
+              </button>
+            </div>
+          </div>
         </div>
 
         <button type="button" class="llm-action-button" data-llm-feedback-button>

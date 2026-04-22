@@ -17,7 +17,7 @@
     {% endif %}
   </div>
 
-  <section class="feedback-metrics" data-feedback-metrics hidden>
+  <section class="feedback-metrics is-hidden" data-feedback-metrics>
     <span class="pill pill-feedback-metric">
       P@k: <strong data-feedback-precision>0.0000</strong>
     </span>
@@ -43,6 +43,11 @@
           ✦ Summarize
         </button>
       </div>
+      <div class="summary-loading is-hidden" data-summary-loading role="status" aria-live="polite">
+        <span class="summary-loading-spinner" aria-hidden="true"></span>
+        <span>Generating summary...</span>
+      </div>
+      <div class="summary-notice is-hidden" data-summary-notice role="status" aria-live="polite"></div>
       <p class="results-summary-text">
         {% if summary_text %}
           {{ summary_text }}
@@ -92,13 +97,19 @@
               <span>{{ item.score|floatformat:3 }}</span>
             </label>
 
+            <span class="pill pill-feedback is-hidden" data-feedback-pill>
+              <svg class="pill-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                <path d="M8 1.25a6.75 6.75 0 1 0 0 13.5A6.75 6.75 0 0 0 8 1.25Zm0 1.5a5.25 5.25 0 1 1 0 10.5A5.25 5.25 0 0 1 8 2.75Zm-.75 2.5a.75.75 0 0 1 1.5 0v3.12l2.09 1.2a.75.75 0 1 1-.75 1.3L7.62 9.45a.75.75 0 0 1-.37-.65V5.25Z"></path>
+              </svg>
+              <span data-feedback-label></span>
+            </span>
+
             <label class="pill pill-window" aria-label="Time window {{ item.source.start_time|seconds_to_hms }} to {{ item.source.end_time|seconds_to_hms }}">
               <span class="pill-window-start">{{ item.source.start_time|seconds_to_hms }}</span>
               <span class="pill-window-separator">&ndash;</span>
               <span class="pill-window-end">{{ item.source.end_time|seconds_to_hms }}</span>
             </label>
 
-            <span class="pill pill-feedback" data-feedback-pill hidden></span>
           </div>
         </li>
       {% endfor %}
