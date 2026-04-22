@@ -1,4 +1,4 @@
-from typing import Any, TypedDict, NotRequired
+from typing import Any, TypedDict, NotRequired, Required
 from elasticsearch import Elasticsearch
 from elasticsearch.dsl import Search
 from dotenv import load_dotenv
@@ -23,25 +23,18 @@ class ResultSource(TypedDict):
     show_filename_prefix: str
     start_time: float
     end_time: float
-    highlight_spans: NotRequired[list[list[int]]]
-    highlighted_text: NotRequired[str]
 
-
-class SearchResult(TypedDict):
-    score: float
-    source: ResultSource
+class SearchResultWithOptionalMetadata(TypedDict, total=False):
+    score: Required[float]
+    source: Required[ResultSource]
     show_name: NotRequired[str]
     episode_name: NotRequired[str]
 
+SearchResult = SearchResultWithOptionalMetadata
 
-SearchResultPossiblyWithMetadata = SearchResult
+class LLMEnrichedSearchResult(SearchResultWithOptionalMetadata, total=False):
+    highlighted_text: Required[str]
 
 
 def source() -> list[str | Any]:
-    return [
-        "text",
-        "episode_filename_prefix",
-        "show_filename_prefix",
-        "start_time",
-        "end_time",
-    ]
+    return list(ResultSource.__required_keys__)

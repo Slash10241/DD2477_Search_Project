@@ -66,8 +66,8 @@
 
           <div class="result-snippet-shell" data-result-snippet-shell>
             <div class="result-snippet-body">
-              {% if item.source.highlighted_text %}
-                <p class="result-snippet" data-result-snippet>{{ item.source.highlighted_text|safe }}</p>
+              {% if item.highlighted_text %}
+                <p class="result-snippet" data-result-snippet>{{ item.highlighted_text|safe }}</p>
               {% else %}
                 <p class="result-snippet" data-result-snippet>{{ item.source.text }}</p>
               {% endif %}

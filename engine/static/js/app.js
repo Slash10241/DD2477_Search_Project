@@ -34,7 +34,7 @@ function renderHighlightedResults(results) {
 		const snippet = card.querySelector("[data-result-snippet]");
 		if (!snippet) return;
 
-		const highlightedText = result.source?.highlighted_text;
+		const highlightedText = result.highlighted_text;
 		if (typeof highlightedText === "string" && highlightedText.length > 0) {
 			snippet.innerHTML = highlightedText;
 		}

@@ -9,7 +9,7 @@ from django.conf import settings
 from google import genai
 from pydantic import BaseModel, Field, ValidationError
 
-from .elastic_utils import SearchResultPossiblyWithMetadata
+from .elastic_utils import SearchResult
 
 DEFAULT_FEEDBACK_MODEL = "gemini-3.1-flash-lite-preview"
 
@@ -42,7 +42,7 @@ def _get_client() -> genai.Client:
     return genai.Client(api_key=_get_api_key())
 
 
-def _build_prompt(query_text: str, results: Sequence[SearchResultPossiblyWithMetadata]) -> str:
+def _build_prompt(query_text: str, results: Sequence[SearchResult]) -> str:
     lines = [
         "You are given a user query and retrieved podcast transcript chunks.",
         "Assign a relevance label to each result using this exact scale:",
@@ -82,7 +82,7 @@ DEFAULT_BATCH_SIZE = 10
 
 def score_results(
     query_text: str,
-    results: Sequence[SearchResultPossiblyWithMetadata],
+    results: Sequence[SearchResult],
     batch_size: int = DEFAULT_BATCH_SIZE,
 ) -> dict:
     if not query_text.strip() or not results:

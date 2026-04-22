@@ -3,8 +3,8 @@ from dotenv import load_dotenv
 import os
 from pathlib import Path
 from threading import Lock
-from typing import TypedDict, Sequence
-from .elastic_utils import SearchResult, SearchResultPossiblyWithMetadata
+from typing import TypedDict
+from .elastic_utils import SearchResultWithOptionalMetadata, SearchResultWithOptionalMetadata
 
 load_dotenv()
 class ShowMetadata(TypedDict):
@@ -60,7 +60,7 @@ def _get_metadata_map() -> dict[str, ShowMetadata]:
 def warm_metadata_cache() -> int:
     return len(_get_metadata_map())
 
-def enrich_results_with_metadata(results: Sequence[SearchResult]) -> Sequence[SearchResultPossiblyWithMetadata]:
+def enrich_results_with_metadata(results: list[SearchResultWithOptionalMetadata]) -> list[SearchResultWithOptionalMetadata]:
     if not results:
         return results
 
@@ -68,7 +68,7 @@ def enrich_results_with_metadata(results: Sequence[SearchResult]) -> Sequence[Se
     if not metadata_map:
         return results
     
-    def get_result_with_metadata(res: SearchResult) -> SearchResultPossiblyWithMetadata:
+    def get_result_with_metadata(res: SearchResultWithOptionalMetadata) -> SearchResultWithOptionalMetadata:
         show_prefix = str(res["source"]["show_filename_prefix"]).strip()
         episode_prefix = str(res["source"]["episode_filename_prefix"]).strip()
         if not show_prefix or not episode_prefix:
@@ -80,7 +80,7 @@ def enrich_results_with_metadata(results: Sequence[SearchResult]) -> Sequence[Se
         episode_name = show_metadata["episodes"].get(episode_prefix, "")
 
         if show_metadata["show_name"]:
-            enriched_res: SearchResultPossiblyWithMetadata = {
+            enriched_res: SearchResultWithOptionalMetadata = {
                 "score": res["score"],
                 "source": res["source"],
                 "show_name": show_metadata["show_name"]
