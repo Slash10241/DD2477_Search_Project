@@ -6,7 +6,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Search</title>
+  <title>Podcast Search Engine</title>
+  <link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">🎧</text></svg>' />
   <link rel="stylesheet" href="{% static 'css/app.css' %}">
   <script src="https://unpkg.com/htmx.org@1.9.12"></script>
 </head>
@@ -17,7 +18,8 @@
       <h1>Search transcripts with lexical, vector, or hybrid ranking.</h1>
       <p>
         Use the mode picker to switch between exact text matching, semantic vector search, and RRF hybrid search.
-        Results update live with HTMX.
+        Results update live with HTMX.<br/>
+        Open the LLM Panel to ask follow-up questions, highlight key passages, and score result quality in one place.
       </p>
     </section>
 
