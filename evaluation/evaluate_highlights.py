@@ -503,15 +503,93 @@ def compute_highlight_metrics(
     }
 
 
-def _interp_pr(
-    p_curve: list[float], r_curve: list[float], recall_grid: np.ndarray
-) -> np.ndarray:
-    if not r_curve or r_curve[-1] == 0:
+def _interp_pr(p_curve: list[float], r_curve: list[float], recall_grid: np.ndarray) -> np.ndarray:
+    """
+    Standard IR max-interpolation: P_interp(r) = max{ P(r') : r' >= r }
+
+    At each recall level on the grid, takes the highest precision achievable
+    at that recall or beyond — producing the upper envelope of the raw trace.
+    Handles multiple precision values at the same recall level correctly by
+    always choosing the maximum rather than an arbitrary one.
+    """
+    if not r_curve or max(r_curve) == 0:
         return np.zeros(len(recall_grid))
-    paired = sorted(zip(r_curve, p_curve))
-    r_sorted = [x[0] for x in paired]
-    p_sorted = [x[1] for x in paired]
-    return np.interp(recall_grid, r_sorted, p_sorted)
+
+    interp = np.zeros(len(recall_grid))
+    for i, r in enumerate(recall_grid):
+        eligible = [p for p, rc in zip(p_curve, r_curve) if rc >= r]
+        interp[i] = max(eligible) if eligible else 0.0
+    return interp
+
+
+def plot_avg_precision_recall(
+    results: dict[str, Any], output_path: str = AVG_PLOT_PATH
+) -> None:
+    recall_grid = np.array([i / 100 for i in range(101)], dtype=float)
+    interp_precisions = [
+        _interp_pr(p, r, recall_grid)
+        for p, r in zip(results["p_curves"], results["r_curves"])
+    ]
+    mean_precision = (
+        np.mean(interp_precisions, axis=0)
+        if interp_precisions
+        else np.zeros_like(recall_grid)
+    )
+
+    fig, ax = plt.subplots(figsize=(9, 6))
+    ax.plot(
+        recall_grid,
+        mean_precision,
+        color="#16A34A",
+        linewidth=2.5,
+        label="Interpolated Precision-Recall Curve (quality>=2)",
+    )
+    ax.fill_between(recall_grid, mean_precision, alpha=0.12, color="#16A34A")
+
+    ax.set_xlabel("Recall", fontsize=13)
+    ax.set_ylabel("Precision", fontsize=13)
+    ax.set_title("Interpolated Precision-Recall Curve — Highlight Evaluation", fontsize=14)
+    ax.set_xlim(0, 1.02)
+    ax.set_ylim(0, 1.05)
+    ax.legend(fontsize=12, loc="upper right")
+    ax.grid(True, linestyle="--", alpha=0.4)
+    plt.tight_layout()
+    plt.savefig(output_path, dpi=150)
+    plt.close()
+
+
+def plot_per_query_precision_recall(
+    results: dict[str, Any], out_dir: str = PER_QUERY_PLOT_DIR
+) -> None:
+    os.makedirs(out_dir, exist_ok=True)
+
+    recall_grid = np.array([i / 100 for i in range(101)], dtype=float)
+
+    for idx, (query, p_curve, r_curve) in enumerate(
+        zip(results["queries"], results["p_curves"], results["r_curves"]),
+        start=1,
+    ):
+        interp_p = _interp_pr(p_curve, r_curve, recall_grid)
+
+        fig, ax = plt.subplots(figsize=(7, 4.5))
+        ax.plot(recall_grid, interp_p, color="#16A34A", linewidth=2,
+                label="Interpolated P-R Curve")
+        ax.fill_between(recall_grid, interp_p, alpha=0.10, color="#16A34A")
+
+        title = query if len(query) <= 55 else query[:52] + "..."
+        ax.set_title(f"Interpolated Precision-Recall Curve: {title}", fontsize=10)
+        ax.set_xlabel("Recall", fontsize=11)
+        ax.set_ylabel("Precision", fontsize=11)
+        ax.set_xlim(0, 1.02)
+        ax.set_ylim(0, 1.05)
+        ax.legend(fontsize=8, loc="upper right")
+        ax.grid(True, linestyle="--", alpha=0.4)
+        plt.tight_layout()
+
+        safe_name = re.sub(r"[^\w]+", "_", query)[:60]
+        output_path = os.path.join(out_dir, f"{idx:02d}_{safe_name}.png")
+        plt.savefig(output_path, dpi=120)
+        plt.close()
 
 
 def save_metrics_per_query(
@@ -585,89 +663,6 @@ def save_pr_curve_per_query(
         ):
             for rank, (p, r) in enumerate(zip(p_curve, r_curve), start=1):
                 writer.writerow([query, rank, round(p, 6), round(r, 6)])
-
-
-def plot_avg_precision_recall(
-    results: dict[str, Any], output_path: str = AVG_PLOT_PATH
-) -> None:
-    recall_grid = np.array([i / 100 for i in range(101)], dtype=float)
-    interp_precisions = [
-        _interp_pr(p, r, recall_grid)
-        for p, r in zip(results["p_curves"], results["r_curves"])
-    ]
-    mean_precision = (
-        np.mean(interp_precisions, axis=0)
-        if interp_precisions
-        else np.zeros_like(recall_grid)
-    )
-
-    fig, ax = plt.subplots(figsize=(9, 6))
-    ax.plot(
-        recall_grid,
-        mean_precision,
-        color="#16A34A",
-        linewidth=2.5,
-        label="Mean highlight P-R curve (quality>=2)",
-    )
-    ax.fill_between(recall_grid, mean_precision, alpha=0.12, color="#16A34A")
-
-    colors = ["#EF4444", "#F97316", "#EAB308", "#22C55E", "#3B82F6"]
-    for k, color in zip(K_VALUES, colors):
-        r_k = results["averaged"][k]["recall"]
-        p_k = results["averaged"][k]["precision"]
-        ax.scatter(r_k, p_k, color=color, s=90, zorder=5, label=f"k={k}")
-
-    ax.set_xlabel("Recall", fontsize=13)
-    ax.set_ylabel("Precision", fontsize=13)
-    # ax.set_title("Average Highlight Precision-Recall Curve", fontsize=14)
-    ax.set_xlim(0, 1.02)
-    ax.set_ylim(0, 1.05)
-    ax.legend(fontsize=12, loc="lower right")
-    ax.grid(True, linestyle="--", alpha=0.4)
-    plt.tight_layout()
-    plt.savefig(output_path, dpi=150)
-    plt.close()
-
-
-def plot_per_query_precision_recall(
-    results: dict[str, Any], out_dir: str = PER_QUERY_PLOT_DIR
-) -> None:
-    os.makedirs(out_dir, exist_ok=True)
-
-    for idx, (query, p_curve, r_curve) in enumerate(
-        zip(results["queries"], results["p_curves"], results["r_curves"]),
-        start=1,
-    ):
-        fig, ax = plt.subplots(figsize=(7, 4.5))
-        ax.plot(r_curve, p_curve, color="#16A34A", linewidth=2, label="P-R curve")
-        ax.fill_between(r_curve, p_curve, alpha=0.10, color="#16A34A")
-
-        query_metrics = results["per_query"][query]
-        colors = ["#EF4444", "#F97316", "#EAB308", "#22C55E", "#3B82F6"]
-        for k, color in zip(K_VALUES, colors):
-            ax.scatter(
-                query_metrics["recall"][k],
-                query_metrics["precision"][k],
-                color=color,
-                s=70,
-                zorder=5,
-                label=f"@{k}",
-            )
-
-        title = query if len(query) <= 55 else query[:52] + "..."
-        ax.set_title(f"Highlight P-R: {title}", fontsize=10)
-        ax.set_xlabel("Recall", fontsize=11)
-        ax.set_ylabel("Precision", fontsize=11)
-        ax.set_xlim(0, 1.02)
-        ax.set_ylim(0, 1.05)
-        ax.legend(fontsize=8, loc="upper right", title="Cut-off K")
-        ax.grid(True, linestyle="--", alpha=0.4)
-        plt.tight_layout()
-
-        safe_name = re.sub(r"[^\w]+", "_", query)[:60]
-        output_path = os.path.join(out_dir, f"{idx:02d}_{safe_name}.png")
-        plt.savefig(output_path, dpi=120)
-        plt.close()
 
 
 def print_summary(results: dict[str, Any]) -> None:

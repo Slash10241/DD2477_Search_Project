@@ -17,7 +17,7 @@ Outputs per search type (in results_hybrid/, results_lexical/, results_vector/):
   - metrics_per_query.csv        : P@K, R@K, DCG@K, nDCG@K for every query
   - metrics_averaged.csv         : macro-averaged metrics across all queries
   - pr_curve_per_query.csv       : full precision-recall curve (rank 1-N) per query
-  - pr_curve.png                 : averaged P-R curve with P@K/R@K markers
+  - pr_curve.png                 : averaged interpolated P-R curve
   - pr_curves_per_query/         : one PNG per query showing its P-R curve
 
 Additionally outputs:
@@ -344,20 +344,13 @@ def plot_avg_precision_recall(pr_results: dict, search_type: str, output_path: s
 
     fig, ax = plt.subplots(figsize=(9, 6))
     ax.plot(recall_grid, mean_precision, color="#2563EB", linewidth=2.5,
-            label=f"Mean P-R curve ({len(pr_results['per_query'])} queries)")
+            label=f"Interpolated Precision-Recall Curve ({len(pr_results['per_query'])} queries)")
     ax.fill_between(recall_grid, mean_precision, alpha=0.12, color="#2563EB")
-
-    colors = ["#EF4444", "#F97316", "#EAB308", "#22C55E"]
-    for k, color in zip(K_VALUES, colors):
-        r_k = pr_results["averaged"][k]["recall"]
-        p_k = pr_results["averaged"][k]["precision"]
-        ax.scatter(r_k, p_k, color=color, s=90, zorder=5,
-                   label=f"P@{k}={p_k:.3f}  R@{k}={r_k:.3f}")
 
     ax.set_xlabel("Recall", fontsize=13)
     ax.set_ylabel("Precision", fontsize=13)
     ax.set_title(
-        f"Average Precision–Recall Curve — {search_type.capitalize()} Search\n"
+        f"Interpolated Precision-Recall Curve — {search_type.capitalize()} Search\n"
         f"(Spotify 2020 Podcast Dataset, Gemini-rated relevance)",
         fontsize=14,
     )
@@ -372,30 +365,29 @@ def plot_avg_precision_recall(pr_results: dict, search_type: str, output_path: s
 
 
 def plot_per_query_precision_recall(data: dict, pr_results: dict, out_dir: str):
-    """One PNG per query showing its P-R curve with @K markers."""
+    """One PNG per query showing its interpolated P-R curve."""
     os.makedirs(out_dir, exist_ok=True)
     queries = list(data.keys())
+
+    recall_grid_pq = np.linspace(0, 1, 101)
 
     for idx, (query, (p_curve, r_curve)) in enumerate(
         zip(queries, zip(pr_results["p_curves"], pr_results["r_curves"]))
     ):
-        fig, ax = plt.subplots(figsize=(7, 4.5))
-        ax.plot(r_curve, p_curve, color="#2563EB", linewidth=2, label="P-R curve")
-        ax.fill_between(r_curve, p_curve, alpha=0.10, color="#2563EB")
+        interp_p = _interp_pr(p_curve, r_curve, recall_grid_pq)
 
-        colors = ["#EF4444", "#F97316", "#EAB308", "#22C55E"]
-        pq = pr_results["per_query"][query]
-        for k, color in zip(K_VALUES, colors):
-            ax.scatter(pq["recall"][k], pq["precision"][k], color=color,
-                       s=70, zorder=5, label=f"@{k}")
+        fig, ax = plt.subplots(figsize=(7, 4.5))
+        ax.plot(recall_grid_pq, interp_p, color="#2563EB", linewidth=2,
+                label="Interpolated P-R Curve")
+        ax.fill_between(recall_grid_pq, interp_p, alpha=0.10, color="#2563EB")
 
         ax.set_xlabel("Recall", fontsize=11)
         ax.set_ylabel("Precision", fontsize=11)
         title = query if len(query) <= 55 else query[:52] + "…"
-        ax.set_title(f"P-R Curve: {title}", fontsize=10)
+        ax.set_title(f"Interpolated Precision-Recall Curve: {title}", fontsize=10)
         ax.set_xlim(0, 1.02)
         ax.set_ylim(0, 1.05)
-        ax.legend(fontsize=8, loc="upper right", title="Cut-off K")
+        ax.legend(fontsize=8, loc="upper right")
         ax.grid(True, linestyle="--", alpha=0.4)
         plt.tight_layout()
 
@@ -410,26 +402,19 @@ def plot_per_query_precision_recall(data: dict, pr_results: dict, out_dir: str):
 def plot_combined_precision_recall(all_results: dict, output_path: str):
     """
     Combined averaged P-R curve for all three search types on a single chart.
-    Each mode gets its own curve + shaded area, with @K scatter markers.
+    Each mode gets its own interpolated P-R curve + shaded area.
     """
     COLORS = {
         "hybrid":  "#2563EB",   # blue
         "lexical": "#16A34A",   # green
         "vector":  "#DC2626",   # red
     }
-    MARKER_COLORS = {
-        "hybrid":  ["#93C5FD", "#60A5FA", "#3B82F6", "#1D4ED8"],
-        "lexical": ["#86EFAC", "#4ADE80", "#22C55E", "#15803D"],
-        "vector":  ["#FCA5A5", "#F87171", "#EF4444", "#B91C1C"],
-    }
-
     recall_grid = np.linspace(0, 1, 101)
     fig, ax     = plt.subplots(figsize=(11, 7))
 
     for stype, res in all_results.items():
         pr    = res["pr"]
         color = COLORS[stype]
-        mcolors = MARKER_COLORS[stype]
 
         interp = [
             _interp_pr(p, r, recall_grid)
@@ -438,31 +423,20 @@ def plot_combined_precision_recall(all_results: dict, output_path: str):
         mean_p = np.mean(interp, axis=0)
 
         ax.plot(recall_grid, mean_p, color=color, linewidth=2.5,
-                label=f"{stype.capitalize()} (mean curve)")
+                label=f"{stype.capitalize()} — Interpolated P-R Curve")
         ax.fill_between(recall_grid, mean_p, alpha=0.08, color=color)
-
-        # @K scatter markers for this mode
-        for k, mc in zip(K_VALUES, mcolors):
-            r_k = pr["averaged"][k]["recall"]
-            p_k = pr["averaged"][k]["precision"]
-            ax.scatter(r_k, p_k, color=mc, edgecolors=color,
-                       linewidths=1.2, s=80, zorder=6,
-                       label=f"  @{k}: P={p_k:.3f} R={r_k:.3f}")
 
     ax.set_xlabel("Recall", fontsize=13)
     ax.set_ylabel("Precision", fontsize=13)
     ax.set_title(
-        "Combined Average Precision–Recall Curve\n"
+        "Combined Interpolated Precision-Recall Curve\n"
         "Hybrid vs Lexical vs Vector Search  ·  Spotify 2020 Podcast Dataset",
         fontsize=14,
     )
     ax.set_xlim(0, 1.02)
     ax.set_ylim(0, 1.05)
 
-    # Organise legend: group by search type
-    handles, labels = ax.get_legend_handles_labels()
-    ax.legend(handles, labels, fontsize=8, loc="upper right",
-              ncol=1, framealpha=0.9, title="Search type  /  @K markers")
+    ax.legend(fontsize=9, loc="upper right", framealpha=0.9, title="Search type")
 
     ax.grid(True, linestyle="--", alpha=0.4)
     plt.tight_layout()
