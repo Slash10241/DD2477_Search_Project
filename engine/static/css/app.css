@@ -835,8 +835,24 @@ ul {
 	color: var(--color-text-strong);
 }
 
+
 .llm-sidebar-body {
 	display: grid;
+}
+
+/* Only Ask tab scrolls */
+.llm-section[data-llm-section="ask"].is-active {
+	max-height: 48vh;
+	overflow-y: auto;
+	padding: 0.5rem 0.5rem 0.5rem 0.5rem;
+	/* Add a little spacing so highlight borders are visible */
+}
+
+/* Highlight and Feedback tabs: never scroll */
+.llm-section[data-llm-section="highlight"],
+.llm-section[data-llm-section="feedback"] {
+	max-height: none !important;
+	overflow: visible !important;
 }
 
 .llm-notice {
@@ -914,10 +930,18 @@ ul {
 
 .llm-k-picker {
 	width: 100%;
+	position: relative;
+	z-index: 1;
 }
 
 .llm-sidebar-panel .mode-picker-menu {
-	z-index: 80;
+	z-index: 9999;
+	position: absolute;
+	left: 0;
+	right: 0;
+	min-width: 100%;
+	width: 100%;
+	max-width: none;
 }
 
 .llm-section-text {
