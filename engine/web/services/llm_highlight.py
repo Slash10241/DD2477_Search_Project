@@ -1,50 +1,27 @@
-from __future__ import annotations
-
 import html
 import logging
-import os
-from copy import deepcopy
 from typing import Sequence
 
-from django.conf import settings
 from google import genai
 from pydantic import BaseModel, Field, ValidationError
 
-from .elastic_utils import SearchResultPossiblyWithMetadata
+from .elastic_utils import SearchResultWithOptionalMetadata, LLMEnrichedSearchResult
+from .llm_utils import get_client, get_model_name
 
 import difflib
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_MODEL = "gemini-2.5-flash-lite"
-DEFAULT_BATCH_SIZE = 5
 
+DEFAULT_BATCH_SIZE = 5
 
 
 class HighlightItem(BaseModel):
     result_index: int
     quotes: list[str] = Field(default_factory=list)
 
-
 class HighlightResponse(BaseModel):
     highlights: list[HighlightItem] = Field(default_factory=list)
-
-
-
-def _get_api_key() -> str:
-    api_key = getattr(settings, "GEMINI_API_KEY", "") or os.environ.get("GEMINI_API_KEY", "")
-    if not api_key:
-        raise RuntimeError("GEMINI_API_KEY is not configured.")
-    return api_key
-
-
-def _get_model_name() -> str:
-    return getattr(settings, "GEMINI_MODEL", DEFAULT_MODEL) or DEFAULT_MODEL
-
-
-def _get_client() -> genai.Client:
-    return genai.Client(api_key=_get_api_key())
-
 
 
 def fuzzy_find(text: str, quote: str):
@@ -73,7 +50,6 @@ def fuzzy_find(text: str, quote: str):
         return best_match
 
     return None
-
 
 
 def _apply_highlights_from_quotes(text: str, quotes: Sequence[str]) -> str:
@@ -139,8 +115,7 @@ def _apply_highlights_from_quotes(text: str, quotes: Sequence[str]) -> str:
     return "".join(parts)
 
 
-
-def _build_prompt(query_text: str, batch: Sequence[SearchResultPossiblyWithMetadata]) -> str:
+def _build_prompt(query_text: str, batch: Sequence[SearchResultWithOptionalMetadata]) -> str:
     lines = [
         "You are given a query and transcript chunks.",
         "Extract the most relevant SHORT phrases from each chunk.",
@@ -171,12 +146,11 @@ def _build_prompt(query_text: str, batch: Sequence[SearchResultPossiblyWithMetad
     return "\n".join(lines)
 
 
-
 def _extract_batch_highlights(
     client: genai.Client,
     model_name: str,
     query_text: str,
-    batch: Sequence[SearchResultPossiblyWithMetadata],
+    batch: Sequence[SearchResultWithOptionalMetadata],
 ) -> HighlightResponse:
     prompt = _build_prompt(query_text, batch)
 
@@ -199,23 +173,37 @@ def _extract_batch_highlights(
         raise RuntimeError("Invalid highlight response")
 
 
+def _to_llm_enriched_result(result: SearchResultWithOptionalMetadata, highlighted = "") -> LLMEnrichedSearchResult:
+    enriched_result: LLMEnrichedSearchResult = {
+        "score": result["score"],
+        "source": result["source"],
+        "highlighted_text": highlighted
+    }
+
+    if "show_name" in result:
+        enriched_result["show_name"] = result["show_name"]
+
+    if "episode_name" in result:
+        enriched_result["episode_name"] = result["episode_name"]
+
+    return enriched_result
+
 
 def highlight_results_in_batches(
     query_text: str,
-    results: Sequence[SearchResultPossiblyWithMetadata],
+    results: list[SearchResultWithOptionalMetadata],
     batch_size: int = DEFAULT_BATCH_SIZE,
-):
+) -> list[LLMEnrichedSearchResult]:
     if not query_text.strip() or not results:
-        return list(results)
+        return [_to_llm_enriched_result(r) for r in results]
 
-    client = _get_client()
-    model_name = _get_model_name()
+    client = get_client()
+    model_name = get_model_name()
     logger.warning("Gemini highlight model in use: %s", model_name)
 
-    highlighted_results = [deepcopy(r) for r in results]
-
-    for i in range(0, len(highlighted_results), batch_size):
-        batch = highlighted_results[i:i + batch_size]
+    res: list[LLMEnrichedSearchResult] = []
+    for i in range(0, len(results), batch_size):
+        batch = results[i:i + batch_size]
 
         llm_output = _extract_batch_highlights(
             client,
@@ -228,13 +216,15 @@ def highlight_results_in_batches(
             item.result_index: item.quotes
             for item in llm_output.highlights
         }
+        res.extend(
+            _to_llm_enriched_result(
+                result,
+                _apply_highlights_from_quotes(
+                    result["source"]["text"],
+                    quote_map.get(local_idx, [])
+                )
+            )
+            for local_idx, result in enumerate(batch)
+        )
 
-        for local_idx, result in enumerate(batch):
-            text = result["source"]["text"]
-            quotes = quote_map.get(local_idx, [])
-
-            highlighted = _apply_highlights_from_quotes(text, quotes)
-
-            result["source"]["highlighted_text"] = highlighted
-
-    return highlighted_results
+    return res

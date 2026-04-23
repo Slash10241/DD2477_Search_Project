@@ -8,76 +8,28 @@ from django.http import HttpRequest, JsonResponse
 from django.views.decorators.http import require_GET, require_POST
 from django.views.decorators.csrf import ensure_csrf_cookie
 
+from .services.elastic_utils import SearchResultWithOptionalMetadata
 from .services.hybrid_search import hybrid_search
 from .services.lexical_search import lexical_search
 from .services.metadata_lookup import enrich_results_with_metadata
 from .services.vector_search import vector_search
 from .services.llm_highlight import highlight_results_in_batches
 from .services.llm_feedback import score_results
-from .services.llm_summary import _get_client
-from django.conf import settings
+from .services.llm_summary import generate_summary
+from .services.llm_rag import generate_rag_answer
 
 class SearchMode(str, Enum):
     LEXICAL = "lexical"
     VECTOR = "vector"
     HYBRID = "hybrid"
 
-
 DEFAULT_SEARCH_MODE = SearchMode.LEXICAL
 VALID_SEARCH_MODES = frozenset(mode.value for mode in SearchMode)
-SEARCH_EXECUTORS: dict[SearchMode, Callable[[str], list]] = {
+SEARCH_EXECUTORS: dict[SearchMode, Callable[[str], list[SearchResultWithOptionalMetadata]]] = {
     SearchMode.LEXICAL: lexical_search,
     SearchMode.VECTOR: lambda query: vector_search(query, num_candidates=100),
     SearchMode.HYBRID: lambda query: hybrid_search(query, num_candidates=100),
 }
-
-
-
-def _generate_rag_answer(user_question: str, query: str, results: list) -> str:
-    client = _get_client()
-    model_name = settings.GEMINI_MODEL
-
-    context_blocks = []
-    for idx, item in enumerate(results, start=1):
-        show_name = item.get("show_name") or item["source"].get("show_filename_prefix", "")
-        episode_name = item.get("episode_name") or item["source"].get("episode_filename_prefix", "")
-        text = item["source"].get("text", "")
-
-        context_blocks.append(
-            f"Result {idx}\n"
-            f"Show: {show_name}\n"
-            f"Episode: {episode_name}\n"
-            f"Text:\n{text}"
-        )
-
-    context = "\n\n".join(context_blocks)
-
-    prompt = f"""
-You are answering a user question using retrieved podcast transcript chunks as context.
-
-Original retrieval query:
-{query}
-
-User question:
-{user_question}
-
-Instructions:
-- Answer only using the provided context
-- Do not invent information
-- If the context is insufficient, say so clearly
-- Combine information across chunks when useful
-- Be concise but informative
-
-Context:
-{context}
-"""
-
-    response = client.models.generate_content(
-        model=model_name,
-        contents=prompt,
-    )
-
-    return (response.text or "").strip()
 
 
 def parse_search_mode(raw_mode: str | None) -> SearchMode:
@@ -87,10 +39,15 @@ def parse_search_mode(raw_mode: str | None) -> SearchMode:
     return DEFAULT_SEARCH_MODE
 
 
-def _run_search_pipeline(q: str, mode: SearchMode) -> tuple[list, str]:
-    results = SEARCH_EXECUTORS[mode](q)
-    results = enrich_results_with_metadata(results)
-    return list(results), ""
+def _run_search_pipeline(q: str, mode: SearchMode, top_k: int | None = None):
+    results = enrich_results_with_metadata(SEARCH_EXECUTORS[mode](q))
+    return results if top_k is None else results[:top_k]
+
+def _to_bad_request_response(s: str):
+    return JsonResponse({"error": s}, status=400)
+
+def _to_internal_server_error_response(e: Exception):
+    return JsonResponse({"error": str(e)}, status=500)
 
 @require_GET
 @ensure_csrf_cookie
@@ -112,14 +69,13 @@ def search(request: HttpRequest):
     mode: SearchMode = parse_search_mode(request.GET.get("mode"))
 
     results = []
-    summary_text = ""
     retrieval_duration_ms: float | None = None
     error_message = ""
 
     if q:
         started_at = perf_counter()
         try:
-            results, summary_text = _run_search_pipeline(q, mode)
+            results = _run_search_pipeline(q, mode)
         except Exception as exc:
             error_message = str(exc)
         finally:
@@ -137,7 +93,6 @@ def search(request: HttpRequest):
             "q": q,
             "mode": mode.value,
             "results": results,
-            "summary_text": summary_text,
             "retrieval_duration_ms": retrieval_duration_ms,
             "error_message": error_message,
         },
@@ -149,7 +104,7 @@ def highlight_results(request: HttpRequest):
     try:
         payload = json.loads(request.body or "{}")
     except json.JSONDecodeError:
-        return JsonResponse({"error": "Invalid JSON body."}, status=400)
+        return _to_bad_request_response("Invalid JSON body.")
 
     q = (payload.get("q") or "").strip()
     mode = parse_search_mode(payload.get("mode"))
@@ -158,18 +113,16 @@ def highlight_results(request: HttpRequest):
     try:
         top_k = max(1, min(int(top_k_raw), 20))
     except (TypeError, ValueError):
-        return JsonResponse({"error": "Invalid top_k value."}, status=400)
+        return _to_bad_request_response("Invalid top_k value.")
 
     if not q:
-        return JsonResponse({"error": "Query is required."}, status=400)
+        return _to_bad_request_response("Query is required.")
 
     try:
-        results, _summary_text = _run_search_pipeline(q, mode)
-        selected_results = list(results[:top_k])
-
+        results = _run_search_pipeline(q, mode, top_k)
         highlighted_results = highlight_results_in_batches(
             query_text=q,
-            results=selected_results,
+            results=results,
             batch_size=5,
         )
 
@@ -180,8 +133,8 @@ def highlight_results(request: HttpRequest):
                 "mode": mode.value,
             }
         )
-    except Exception as exc:
-        return JsonResponse({"error": str(exc)}, status=500)
+    except Exception as e:
+        return _to_internal_server_error_response(e)
 
 
 @require_POST
@@ -189,26 +142,22 @@ def summarize_results(request: HttpRequest):
     try:
         payload = json.loads(request.body or "{}")
     except json.JSONDecodeError:
-        return JsonResponse({"error": "Invalid JSON body."}, status=400)
+        return _to_bad_request_response("Invalid JSON body.")
 
     q = (payload.get("q") or "").strip()
     mode = parse_search_mode(payload.get("mode"))
     top_k = min(int(payload.get("top_k", 10)), 20)
 
     if not q:
-        return JsonResponse({"error": "Query is required."}, status=400)
+        return _to_bad_request_response("Query is required.")
 
     try:
-        results, _ = _run_search_pipeline(q, mode)
-        selected_results = list(results[:top_k])
-
-        from .services.llm_summary import generate_summary
-
-        summary = generate_summary(q, selected_results)
+        results = _run_search_pipeline(q, mode, top_k)
+        summary = generate_summary(q, results)
 
         return JsonResponse({"summary": summary})
-    except Exception as exc:
-        return JsonResponse({"error": str(exc)}, status=500)
+    except Exception as e:
+        return _to_internal_server_error_response(e)
 
 
 @require_POST
@@ -216,7 +165,7 @@ def feedback_results(request: HttpRequest):
     try:
         payload = json.loads(request.body or "{}")
     except json.JSONDecodeError:
-        return JsonResponse({"error": "Invalid JSON body."}, status=400)
+        return _to_bad_request_response("Invalid JSON body.")
 
     q = (payload.get("q") or "").strip()
     mode = parse_search_mode(payload.get("mode"))
@@ -225,18 +174,16 @@ def feedback_results(request: HttpRequest):
     try:
         top_k = max(1, min(int(top_k_raw), 20))
     except (TypeError, ValueError):
-        return JsonResponse({"error": "Invalid top_k value."}, status=400)
+        return _to_bad_request_response("Invalid top_k value.")
 
     if not q:
-        return JsonResponse({"error": "Query is required."}, status=400)
+        return _to_bad_request_response("Query is required.")
 
     try:
-        results, _summary_text = _run_search_pipeline(q, mode)
-        selected_results = list(results[:top_k])
-
+        results = _run_search_pipeline(q, mode, top_k)
         scored_output = score_results(
             query_text=q,
-            results=selected_results,
+            results=results,
         )
 
         return JsonResponse(
@@ -247,8 +194,8 @@ def feedback_results(request: HttpRequest):
                 "mode": mode.value,
             }
         )
-    except Exception as exc:
-        return JsonResponse({"error": str(exc)}, status=500)
+    except Exception as e:
+        return _to_internal_server_error_response(e)
     
 
 
@@ -257,7 +204,7 @@ def ask_results(request: HttpRequest):
     try:
         payload = json.loads(request.body or "{}")
     except json.JSONDecodeError:
-        return JsonResponse({"error": "Invalid JSON body."}, status=400)
+        return _to_bad_request_response("Invalid JSON body.")
 
     q = (payload.get("q") or "").strip()
     ask_query = (payload.get("ask_query") or "").strip()
@@ -267,22 +214,20 @@ def ask_results(request: HttpRequest):
     try:
         top_k = max(1, min(int(top_k_raw), 20))
     except (TypeError, ValueError):
-        return JsonResponse({"error": "Invalid top_k value."}, status=400)
+        return _to_bad_request_response("Invalid top_k value.")
 
     if not q:
-        return JsonResponse({"error": "Search query is required."}, status=400)
+        return _to_bad_request_response("Search query is required.")
 
     if not ask_query:
-        return JsonResponse({"error": "Ask query is required."}, status=400)
+        return _to_bad_request_response("Ask query is required.")
 
     try:
-        results, _summary_text = _run_search_pipeline(q, mode)
-        selected_results = list(results[:top_k])
-
-        answer = _generate_rag_answer(
+        results = _run_search_pipeline(q, mode, top_k)
+        answer = generate_rag_answer(
             user_question=ask_query,
             query=q,
-            results=selected_results,
+            results=results,
         )
 
         return JsonResponse(
@@ -292,5 +237,5 @@ def ask_results(request: HttpRequest):
                 "mode": mode.value,
             }
         )
-    except Exception as exc:
-        return JsonResponse({"error": str(exc)}, status=500)
+    except Exception as e:
+        return _to_internal_server_error_response(e)
