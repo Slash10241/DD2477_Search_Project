@@ -3,13 +3,15 @@ import json
 import os
 from dataclasses import dataclass, field
 from typing import Any, Iterator
-
+import torch
 import matplotlib.pyplot as plt
 from elasticsearch import Elasticsearch, helpers
 from tqdm import tqdm
+from sentence_transformers import SentenceTransformer
 
 ES_HOST = "http://localhost:9200"
 INDEX_NAME = "podcasts"
+CHECKPOINT_FILE = "indexed_files.txt"
 
 CHUNK_DURATION = 120  # 2 minutes
 CHUNK_OVERLAP = 30  # overlap in seconds
@@ -18,6 +20,9 @@ CHUNK_OVERLAP = 30  # overlap in seconds
 BULK_CHUNK_SIZE = 5000
 BULK_MAX_BYTES = 50 * 1024 * 1024
 BULK_THREAD_COUNT = 16
+
+EMBED_MODEL = "sentence-transformers/all-mpnet-base-v2"
+EMBED_BATCH_SIZE = 64 
 
 # For stats
 HISTOGRAM_BIN_SIZE_CHARS = 500
@@ -151,6 +156,12 @@ def create_index(es: Elasticsearch):
                         "start_time": {"type": "float"},
                         "end_time": {"type": "float"},
                         "text": {"type": "text"},
+                        "embedding": {
+                            "type": "dense_vector",
+                            "dims": 768,
+                            "index": True,
+                            "similarity": "cosine"
+                        },
                     }
                 }
             },
@@ -223,39 +234,74 @@ def chunk_transcript(segments: list[Segment]) -> list[Chunk]:
     return chunks
 
 
+def get_indexed_files(es: Elasticsearch) -> set[str]:
+    """Query ES for all unique episode_filename_prefixes already indexed."""
+    indexed = set()
+    resp = es.search(
+        index=INDEX_NAME,
+        body={
+            "size": 0,
+            "aggs": {
+                "unique_files": {
+                    "terms": {
+                        "field": "episode_filename_prefix",
+                        "size": 150000,
+                    }
+                }
+            }
+        }
+    )
+    for bucket in resp["aggregations"]["unique_files"]["buckets"]:
+        indexed.add(bucket["key"])
+    return indexed
+
+
 def iter_actions(
-    all_files: list[str], stats: IndexingStats
+    all_files: list[str], stats: IndexingStats, model, indexed_files: set[str]
 ) -> Iterator[dict[str, Any]]:
     for file_path in tqdm(all_files, desc="Indexing transcripts", unit="file"):
+        episode_filename_prefix = os.path.splitext(os.path.basename(file_path))[0]
+
+        if episode_filename_prefix in indexed_files:
+            stats.files_processed += 1
+            continue  # skip already indexed files
+
         with open(file_path, "r", encoding="utf-8") as f:
             data = json.load(f)
-
-        episode_filename_prefix = os.path.splitext(os.path.basename(file_path))[0]
-        show_filename_prefix = os.path.basename(os.path.dirname(file_path))
 
         segments = parse_transcript(data)
         stats.files_processed += 1
 
         chunks = chunk_transcript(segments)
+        texts = [chunk.text for chunk in chunks]
+        embeddings = model.encode(
+            texts,
+            batch_size=EMBED_BATCH_SIZE,
+            convert_to_numpy=True,
+            show_progress_bar=False,
+        )
 
-        for chunk in chunks:
+        for chunk, embedding in zip(chunks, embeddings):
             _update_chunk_stats(stats, chunk)
-
             yield {
                 "_index": INDEX_NAME,
                 "_source": {
                     "episode_filename_prefix": episode_filename_prefix,
-                    "show_filename_prefix": show_filename_prefix,
+                    "show_filename_prefix": os.path.basename(os.path.dirname(file_path)),
                     "start_time": chunk.start_time,
                     "end_time": chunk.end_time,
                     "text": chunk.text,
+                    "embedding": embedding.tolist(),
                 },
             }
-
+         
 
 def index_transcripts(
     es: Elasticsearch, transcripts_dir: str, max_files: int | None = None
 ):
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    model = SentenceTransformer(EMBED_MODEL, device=device, trust_remote_code=True)
+
     all_files: list[str] = []
     for root, _dirs, files in os.walk(transcripts_dir):
         for file in files:
@@ -272,12 +318,15 @@ def index_transcripts(
             f"{len(all_files)} of {total_discovered_files} files will be indexed"
         )
 
+    indexed_files = get_indexed_files(es)
+    print(f"Resuming: {len(indexed_files)} files already indexed, skipping them.")
+
     stats = IndexingStats()
 
     indexed_count = 0
     for ok, _ in helpers.parallel_bulk(
         es,
-        iter_actions(all_files, stats),
+        iter_actions(all_files, stats, model, indexed_files),
         thread_count=BULK_THREAD_COUNT,
         chunk_size=BULK_CHUNK_SIZE,
         max_chunk_bytes=BULK_MAX_BYTES,
@@ -288,7 +337,7 @@ def index_transcripts(
         if ok:
             indexed_count += 1
 
-    print(f"Indexing complete. Total chunks indexed: {indexed_count}")
+    print(f"Indexing complete. Total new chunks indexed: {indexed_count}")
     print(f"Total files processed: {len(all_files)}")
     print(f"Total files discovered: {total_discovered_files}")
     _print_indexing_stats(stats)
@@ -296,6 +345,16 @@ def index_transcripts(
     base_dir = os.path.dirname(os.path.abspath(__file__))
     histogram_output_path = os.path.join(base_dir, "chunk_text_length_histogram.png")
     _save_chunk_length_histogram(stats, histogram_output_path)
+
+def load_checkpoint() -> set[str]:
+    if not os.path.exists(CHECKPOINT_FILE):
+        return set()
+    with open(CHECKPOINT_FILE, "r") as f:
+        return set(line.strip() for line in f.readlines())
+
+def save_checkpoint(file_path: str):
+    with open(CHECKPOINT_FILE, "a") as f:
+        f.write(file_path + "\n")
 
 
 def parse_args() -> argparse.Namespace:
@@ -333,7 +392,20 @@ def main():
         transcripts_dir=args.transcripts_dir,
         max_files=args.max_files,
     )
+    
 
+def semantic_search(es, query_text, model, k=10):
+    query_vec = model.encode(query_text, convert_to_numpy=True).tolist()
+    resp = es.search(
+        index=INDEX_NAME,
+        knn={
+            "field": "embedding",
+            "query_vector": query_vec,
+            "k": k,
+            "num_candidates": 100,
+        },
+    )
+    return resp["hits"]["hits"]
 
 if __name__ == "__main__":
     main()
