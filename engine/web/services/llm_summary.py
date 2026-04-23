@@ -1,10 +1,8 @@
 from django.conf import settings
 
-from .llm_utils import get_client
+from .llm_utils import generate_content
 
 def generate_summary(query: str, results: list) -> str:
-    client = get_client()
-
     texts = [r["source"]["text"] for r in results]
 
     context = "\n\n".join(texts)
@@ -30,7 +28,7 @@ def generate_summary(query: str, results: list) -> str:
     {context}
     """
 
-    response = client.models.generate_content(
+    response = generate_content(
         model=settings.GEMINI_MODEL,
         contents=prompt,
     )

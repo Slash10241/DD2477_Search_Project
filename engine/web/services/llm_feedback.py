@@ -3,11 +3,10 @@ from math import log2
 from typing import Sequence, TypedDict
 
 from django.conf import settings
-from google import genai
 from pydantic import BaseModel, Field, ValidationError
 
 from .elastic_utils import SearchResult
-from .llm_utils import get_api_key
+from .llm_utils import generate_content
 
 DEFAULT_FEEDBACK_MODEL = "gemini-3.1-flash-lite-preview"
 
@@ -57,10 +56,6 @@ class FeedbackItem(BaseModel):
 
 class FeedbackResponse(BaseModel):
     feedback: list[FeedbackItem] = Field(default_factory=list)
-
-
-def _get_client() -> genai.Client:
-    return genai.Client(api_key=get_api_key())
 
 
 def _build_prompt(query_text: str, results: Sequence[SearchResult]) -> str:
@@ -116,7 +111,6 @@ def score_results(
             },
         }
 
-    client = _get_client()
     model_name = _get_feedback_model_name()
 
     labels: list[int] = []
@@ -126,7 +120,7 @@ def score_results(
 
         prompt = _build_prompt(query_text, batch)
 
-        response = client.models.generate_content(
+        response = generate_content(
             model=model_name,
             contents=prompt,
             config={
