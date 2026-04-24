@@ -1,10 +1,9 @@
 from django.conf import settings
 
-from .llm_utils import get_client
+from .llm_utils import generate_content
 from .elastic_utils import SearchResultWithOptionalMetadata
 
 def generate_rag_answer(user_question: str, query: str, results: list[SearchResultWithOptionalMetadata]) -> str:
-    client = get_client()
     model_name = settings.GEMINI_MODEL
 
     context_blocks = []
@@ -42,7 +41,7 @@ Context:
 {context}
 """
 
-    response = client.models.generate_content(
+    response = generate_content(
         model=model_name,
         contents=prompt,
     )

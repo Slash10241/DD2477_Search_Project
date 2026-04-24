@@ -2,11 +2,10 @@ import html
 import logging
 from typing import Sequence
 
-from google import genai
 from pydantic import BaseModel, Field, ValidationError
 
 from .elastic_utils import SearchResultWithOptionalMetadata, LLMEnrichedSearchResult
-from .llm_utils import get_client, get_model_name
+from .llm_utils import generate_content, get_model_name
 
 import difflib
 
@@ -147,14 +146,13 @@ def _build_prompt(query_text: str, batch: Sequence[SearchResultWithOptionalMetad
 
 
 def _extract_batch_highlights(
-    client: genai.Client,
     model_name: str,
     query_text: str,
     batch: Sequence[SearchResultWithOptionalMetadata],
 ) -> HighlightResponse:
     prompt = _build_prompt(query_text, batch)
 
-    response = client.models.generate_content(
+    response = generate_content(
         model=model_name,
         contents=prompt,
         config={
@@ -197,7 +195,6 @@ def highlight_results_in_batches(
     if not query_text.strip() or not results:
         return [_to_llm_enriched_result(r) for r in results]
 
-    client = get_client()
     model_name = get_model_name()
     logger.warning("Gemini highlight model in use: %s", model_name)
 
@@ -206,7 +203,6 @@ def highlight_results_in_batches(
         batch = results[i:i + batch_size]
 
         llm_output = _extract_batch_highlights(
-            client,
             model_name,
             query_text,
             batch,
