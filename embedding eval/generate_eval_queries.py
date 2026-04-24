@@ -46,10 +46,10 @@ Requirements:
 - queries should be moderately general, not hyper-specific
 - prefer topic-level, issue-level, or discussion-level phrasing
 - use neutral, professional, and presentation-appropriate wording
-- avoid slang, vulgar, overly informal, or unnecessarily explicit wording
-- when a chunk involves sensitive personal topics, prefer broader, higher-level, and more respectful phrasing
-- prefer general themes such as relationships, communication, identity, well-being, or personal challenges over intimate or highly detailed wording when possible
-- avoid phrasing that sounds sensational or unnecessarily intimate unless it is necessary for the main topic
+- avoid slang, vulgar, overly informal, or explicit wording
+- avoid any sexual or explicit content
+- do not generate queries related to sex, sexual behavior, or explicit relationships
+- when a chunk involves such topics, generalize to broader themes like relationships, communication, or well-being
 - avoid copying long exact phrases from the chunk
 - avoid exact scores, exact dates, exact quotes, or very one-off events unless central to the topic
 - avoid show names, episode ids, timestamps, and speaker-specific references
@@ -220,7 +220,7 @@ def looks_too_entity_heavy(q: str) -> bool:
     allowed_topic_entities = {
         "mormon", "lds", "christianity", "christian", "religion",
         "lgbtq", "nba", "nbl", "podcast", "church", "faith",
-        "basketball", "dating", "intimacy", "sexuality", "leadership",
+        "basketball", "dating", "leadership",
         "college", "sports", "mental", "health", "identity",
         "relationships", "spiritual", "religious",
     }
