@@ -1,48 +1,136 @@
-# DD2477_Search_Project
+# Embedding + Reranking Evaluation for Podcast Search
 
-Code for Information Retrieval project
+This code evaluates different embedding models for the podcast search project.
 
-## Local elasticsearch setup
+The script loads already indexed podcast transcript chunks from the local Elasticsearch index, retrieves the top-k clips using embedding cosine similarity, and then uses an Ollama judge model to score the relevance of the retrieved clips.
 
-1. Install docker
+The purpose is to help choose a good embedding model for the retriever in the podcast search system.
 
-2. Run the following:
+## What this does
 
-```bash
-curl -fsSL https://elastic.co/start-local | sh
+* loads podcast chunks from the local Elasticsearch index `podcasts`
+* embeds the chunks using one or more embedding models
+* embeds each query and retrieves the top-k most similar chunks
+* uses Ollama with `gpt-oss:120b-cloud` as a judge model
+* scores each retrieved `(query, chunk)` pair for relevance
+* computes retrieval metrics such as:
+
+  * Precision@k
+  * MRR
+  * nDCG@k
+* saves:
+
+  * a JSON file with full results
+  * a TXT file with a readable summary
+
+## Requirements
+
+Before running this script, make sure that:
+
+* Elasticsearch is already running locally
+* the podcast transcripts have already been indexed into the `podcasts` index
+* Ollama is installed
+* you are signed in to Ollama so the cloud model `gpt-oss:120b-cloud` can be used
+* the required Python dependencies are installed
+
+## Ollama
+
+Install Ollama from the official website, then sign in so the cloud judge model can be used.
+
+After signing in, the script can use:
+
+```text
+gpt-oss:120b-cloud
 ```
 
-This will create a local Elasticsearch and Kibana setup and a `elastic-start-local` directory with a `.env` file with passwords and the API key. After installing the services will be running on the following ports:
+as the judge model.
 
-- Elasticsearch: http://localhost:9200
+## Queries
 
-- Kibana: http://localhost:5601
+The default queries are set in `evaluate_embeddings_llm_judge.py` in:
 
-Test the connection with:
-
-```bash
-cd elastic-start-local/
-source .env
-curl $ES_LOCAL_URL -H "Authorization: ApiKey ${ES_LOCAL_API_KEY}"
+```python
+DEFAULT_QUERIES = [
+    "Higgs Boson",
+    "terrorism",
+    "what Jesus means to me"
+]
 ```
 
-3. To stop the services, run:
+You can override this by passing a JSON file with queries using `--queries-json`.
 
-```bash
-cd elastic-start-local
-./stop.sh
+Example format:
+
+```json
+[
+  "Spiritual competition",
+  "NBA playoff positioning",
+  "Podcast monetization strategies"
+]
 ```
 
-4. To start the services again, run:
+## Example command used for evaluation
 
 ```bash
-cd elastic-start-local
-./start.sh
+uv run run_embedding_llm_evaluation.py \
+  --api-key $ES_LOCAL_API_KEY \
+  --queries-json generated_eval_queries_flat.json \
+  --chunk-limit 3000 \
+  --top-k 10 \
+  --judge-model gpt-oss:120b-cloud \
+  --models \
+    "sentence-transformers/all-MiniLM-L6-v2" \
+    "sentence-transformers/all-mpnet-base-v2" \
+    "BAAI/bge-small-en-v1.5" \
+  --output-json embedding_eval_3models.json \
+  --output-txt embedding_eval_3models.txt
 ```
 
-5. Uninstall:
+## Results
 
-```bash
-cd elastic-start-local
-./uninstall.sh
 ```
+==============================================================================================================
+EMBEDDING MODEL EVALUATION SUMMARY
+==============================================================================================================
+Model                                                    P@10      MRR    nDCG@10    EmbedTime
+--------------------------------------------------------------------------------------------------------------
+sentence-transformers/all-mpnet-base-v2              0.6975 0.9137 0.8493     8m 51.2s
+BAAI/bge-small-en-v1.5                               0.6294 0.8550 0.8030      3m 1.1s
+sentence-transformers/all-MiniLM-L6-v2               0.5958 0.8568 0.7945       46.07s
+==============================================================================================================
+```
+
+## Notes
+
+* `--chunk-limit 3000` means that the script only loads the first 3000 already indexed chunks from Elasticsearch for evaluation
+* this does **not** re-index the dataset
+* retrieval is done by embedding the query and the chunks, then ranking chunks by cosine similarity
+* the judge scores each retrieved `(query, chunk)` pair multiple times and averages the result
+
+### About EmbedTime
+
+* `EmbedTime` is the **total time required to compute embeddings for all chunks** for a given model
+* it is **not an average**
+* it reflects the **cost of encoding the full dataset once**
+
+In practice:
+
+* this cost is usually paid once and cached
+* it does not affect query-time latency in a deployed system
+
+## Output
+
+The script saves:
+
+* a JSON file with the detailed retrievals, scores, assigned relevance labels, and queries
+* a TXT file with a readable summary of the results
+
+---
+
+## Summary
+
+* `all-mpnet-base-v2` gives the best overall retrieval quality but is the slowest
+* `bge-small-en-v1.5` provides a good balance between performance and speed
+* `all-MiniLM-L6-v2` is the fastest but slightly weaker in retrieval quality
+
+This trade-off helps guide the choice of embedding model depending on system constraints.
