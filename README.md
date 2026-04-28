@@ -2,6 +2,12 @@
 
 Code for Information Retrieval project
 
+## Project Structure
+
+This repository is organized into multiple directories, each containing its own README with instructions for running that specific part of the project.
+
+To run the demo, please refer to the README inside the ⁠ engine ⁠ directory.
+
 ## Local elasticsearch setup
 
 1. Install docker
